@@ -1,0 +1,34 @@
+---
+type: order
+knit: rqti::render_qtijs
+identifier: order001 # think twice about this id for later data analysis!
+title: A meaningful title that can be displayed in the LMS
+# defines the scoring method, `false` means the correct order must be restored 
+# completely by the candidate in order to get points
+points_per_answer: false 
+points: 2
+---
+
+# question
+
+What is the structure of an exam in QTI terms, starting from the top (the exam) to the bottom (individual questions).
+
+- test
+- section
+- item
+- interaction
+
+# feedback
+
+For order exercises it is usually clear why the given order is correct, but you might still want to provide a detailed feedback.
+
+<!-- If you prefer specific feedback for correct and incorrect solution, delete the general feedback section and uncomment everything starting from this line:
+
+# feedback+
+
+Nice. (Only displayed when the solution is correct.)
+
+# feedback-
+
+Try again. (Only displayed if the solution is not correct.)
+-->

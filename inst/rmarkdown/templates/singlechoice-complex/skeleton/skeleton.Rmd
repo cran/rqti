@@ -1,0 +1,28 @@
+---
+type: sc # equivalent to singlechoice and schoice
+knit: rqti::render_qtijs # if you do not want our preview renderer, remove this
+identifier: sc001 # think twice about this id for later data analysis!
+title: A meaningful title that can be displayed in the LMS
+shuffle: false # random order of choices
+orientation: horizontal # OR horizontal
+points: 0.5
+---
+
+# question
+
+Which version of the QTI standard is used by the R package rqti?
+
+- 1.2
+- *2.1* <!--Mark correct solution with asterisks-->
+- 2.2
+- 3.0
+
+# feedback+
+
+Nice. (Only displayed when the solution is correct.)
+
+# feedback-
+
+Try again. (Only displayed if the solution is not correct.)
+
+<!-- If you prefer general feedback, just use the the section # feedback and delete the other feedback sections-->

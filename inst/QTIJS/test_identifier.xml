@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assessmentTest xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="test_identifier" title="Test Title">
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <timeLimits maxTime="5400"/>
+  <testPart identifier="test_part" navigationMode="nonlinear" submissionMode="individual">
+    <itemSessionControl maxAttempts="1" allowComment="true" rebuildVariables="true"/>
+    <assessmentSection identifier="permanent_section_27" fixed="false" title="permanent_section_27" visible="true">
+      <itemSessionControl allowComment="true"/>
+      <assessmentItemRef identifier="id_task_7657" href="id_task_7657.xml"/>
+    </assessmentSection>
+  </testPart>
+  <outcomeProcessing>
+    <setOutcomeValue identifier="SCORE">
+      <sum>
+        <testVariables variableIdentifier="SCORE"/>
+      </sum>
+    </setOutcomeValue>
+  </outcomeProcessing>
+</assessmentTest>

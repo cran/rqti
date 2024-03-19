@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE assessmentItem>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="test_MultipleChoice_example" title="MultipleChoice" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="directedPair">
+    <correctResponse>
+      <value>Fahrst_dmdFnD True</value>
+      <value>Nimm_dPadS True</value>
+      <value>Ich_gimFiT False</value>
+      <value>Ich_gimFiT mit</value>
+      <value>Ich_haeM False</value>
+      <value>Ich_haeM ein</value>
+      <value>Spielen_ShbkF True</value>
+      <value>Fliegen_SbadF False</value>
+      <value>Fliegen_SbadF mit</value>
+      <value>Schicken_SmbeB True</value>
+    </correctResponse>
+    <mapping defaultValue="0">
+      <mapEntry mapKey="Fahrst_dmdFnD True" mappedValue="1"/>
+      <mapEntry mapKey="Nimm_dPadS True" mappedValue="1"/>
+      <mapEntry mapKey="Ich_gimFiT False" mappedValue="1"/>
+      <mapEntry mapKey="Ich_gimFiT mit" mappedValue="1"/>
+      <mapEntry mapKey="Ich_haeM False" mappedValue="1"/>
+      <mapEntry mapKey="Ich_haeM ein" mappedValue="1"/>
+      <mapEntry mapKey="Spielen_ShbkF True" mappedValue="1"/>
+      <mapEntry mapKey="Fliegen_SbadF False" mappedValue="1"/>
+      <mapEntry mapKey="Fliegen_SbadF mit" mappedValue="1"/>
+      <mapEntry mapKey="Schicken_SmbeB True" mappedValue="1"/>
+      <mapEntry mapKey="Fahrst_dmdFnD False" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Fahrst_dmdFnD mit" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Fahrst_dmdFnD ein" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Nimm_dPadS False" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Nimm_dPadS mit" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Nimm_dPadS ein" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Ich_gimFiT True" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Ich_gimFiT ein" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Ich_haeM True" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Ich_haeM mit" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Spielen_ShbkF False" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Spielen_ShbkF mit" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Spielen_ShbkF ein" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Fliegen_SbadF True" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Fliegen_SbadF ein" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Schicken_SmbeB False" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Schicken_SmbeB mit" mappedValue="-0.555555555555556"/>
+      <mapEntry mapKey="Schicken_SmbeB ein" mappedValue="-0.555555555555556"/>
+    </mapping>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>10</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <itemBody>
+    <p>Choose the correct order in the multiplication table</p>
+    <matchInteraction responseIdentifier="RESPONSE" shuffle="true" maxAssociations="10">
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="Fahrst_dmdFnD" fixed="false" matchMax="4">Fahrst du mit der Familie nach Deutschland?</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Nimm_dPadS" fixed="false" matchMax="4">Nimm den Pullover aus dem Schrank.</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Ich_gimFiT" fixed="false" matchMax="4">Ich gehe in meiner Freundin ins Theater.</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Ich_haeM" fixed="false" matchMax="4">Ich habe eine Meerschweinchen.</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Spielen_ShbkF" fixed="false" matchMax="4">Spielen Sie hier bitte kein Fahrrad</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Fliegen_SbadF" fixed="false" matchMax="4">Fliegen Sie bitte an dem Flugzeug</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="Schicken_SmbeB" fixed="false" matchMax="4">Schicken Sie mir bitte einen Brief!</simpleAssociableChoice>
+      </simpleMatchSet>
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="True" fixed="false" matchMax="7">True</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="False" fixed="false" matchMax="7">False</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="mit" fixed="false" matchMax="7">mit</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="ein" fixed="false" matchMax="7">ein</simpleAssociableChoice>
+      </simpleMatchSet>
+    </matchInteraction>
+  </itemBody>
+  <responseProcessing>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="RESPONSE"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE">
+          <sum>
+            <variable identifier="SCORE"/>
+            <mapResponse identifier="RESPONSE"/>
+          </sum>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <gt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MAXSCORE"/>
+        </gt>
+        <setOutcomeValue identifier="SCORE">
+          <variable identifier="MAXSCORE"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <lt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MINSCORE"/>
+        </lt>
+        <setOutcomeValue identifier="SCORE">
+          <variable identifier="MINSCORE"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+  </responseProcessing>
+</assessmentItem>

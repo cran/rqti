@@ -1,0 +1,40 @@
+---
+type: gap
+knit: rqti::render_qtijs
+---
+
+```{r, preparation}
+library(rqti)
+```
+
+```{r, data}
+iq <- round(rnorm(10, 100, 15))
+mean_iq <- mean(iq)
+```
+
+# question
+
+## numeric gaps
+
+IQ Tests are standardized to have a mean value of <<100>>.
+
+You conducted an IQ test for 10 persons and found the following values: 
+
+`r iq`
+
+What is the mean value of these IQ values? `r gap_numeric(mean(iq))`
+
+See `?gap_numeric` for more options (e.g. tolerance).
+
+## text gaps
+
+The original IQ test was developed by `r gap_text(c("Alfred Binet", "Binet", "A. Binet"))` in the early <<20th>> century with the intention of identifying students who might need extra assistance.
+
+See `?gap_text` for more options (e.g. tolerance).
+
+# feedback
+
+1. IQ Tests are standardized to have a mean of 100.
+1. The correct mean value for `r iq` is `r mean_iq`.
+1. The original IQ test was developed by Alfred Binet.
+1. It was in the 20th century.

@@ -1,0 +1,31 @@
+Binding: rqti_project
+Title: rqti Project
+OpenFiles: main.R
+Icon: rqti_icon.png
+
+Parameter: url_endpoint
+Widget: TextInput
+Label: BPS API Endpoint
+Default: https://bildungsportal.sachsen.de/opal/
+Position: left
+
+Parameter: start_server
+Widget: SelectInput
+Label: Launch QTIJS Server
+Fields: TRUE, FALSE
+Default: TRUE
+Position: right
+
+Parameter: templates
+Widget: SelectInput
+Label: Create Templates
+Fields: YES, NO
+Default: YES
+Position: left
+
+Parameter: render
+Widget: SelectInput
+Label: Default way to render templates
+Fields: QTIJS, OPAL
+Default: QTIJS
+Position: left
