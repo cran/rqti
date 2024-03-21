@@ -1,6 +1,6 @@
 Package: rqti
 Title: Create Tests According to QTI 2.1 Standard
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Andrey", "Shevandrin", email = "shevandrin@gmail.com", 
     role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-0807-2546")),
@@ -39,7 +39,7 @@ Collate: 'rqti.R' 'ModalFeedback.R' 'AssessmentItem.R'
         'utils-pipe.R' 'zzz.R'
 Depends: R (>= 2.10)
 NeedsCompilation: no
-Packaged: 2024-03-18 13:03:11 UTC; sheva
+Packaged: 2024-03-21 11:05:59 UTC; sheva
 Author: Andrey Shevandrin [aut, cre, cph]
     (<https://orcid.org/0000-0003-0807-2546>),
   Petr Bondarenko [ctb] (<https://orcid.org/0000-0002-5154-9664>),
@@ -49,4 +49,4 @@ Author: Andrey Shevandrin [aut, cre, cph]
   Stiftung für Innovation in der Hochschullehre [fnd]
 Maintainer: Andrey Shevandrin <shevandrin@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-03-19 20:00:03 UTC
+Date/Publication: 2024-03-21 12:10:02 UTC
