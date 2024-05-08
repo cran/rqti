@@ -193,6 +193,15 @@ make_variant_subsection <- function(file, n_variants, seed_number) {
 #' @param rebuild_variables A boolean, optional, enabling the recalculation of
 #'   variables and reshuffling the order of choices for each item-attempt.
 #'   Default is `TRUE.`
+#' @param contributor A list of objects [QtiContributor]-type that holds
+#'   metadata information about the authors.
+#' @param description A character string providing a textual description of the
+#'   content of this learning object.
+#' @param rights A character string describing the intellectual property rights
+#'   and conditions of use for this learning object. By default it takes value
+#'   from environment variable 'RQTI_RIGHTS'.
+#' @param version A character string representing the edition/version of this
+#'   learning object.
 #' @return An [AssessmentTest] object.
 #' @seealso [test4opal()], [section()], [AssessmentTest], [AssessmentSection]
 #' @examples
@@ -207,16 +216,23 @@ test <- function(content, identifier = "test_identifier", title = "Test Title",
                  grade_label = c(en="Grade", de="Note"),
                  table_label = c(en="Grade", de="Note"),
                  navigation_mode = "nonlinear", submission_mode = "individual",
-                 allow_comment = TRUE, rebuild_variables = TRUE) {
+                 allow_comment = TRUE, rebuild_variables = TRUE,
+                 contributor = list(), description = "",
+                 rights = Sys.getenv("RQTI_RIGHTS"), version = "0.0.9") {
 
     params <- as.list(environment())
     params <- Filter(Negate(is.null), params)
     params["section"] <- ifelse (length(unlist(params["content"])) == 1,
                                  list(params["content"]), as.list(params["content"]))
     params["content"] = NULL
-    # define test class
+    mt_list <- params[names(params) %in% c("contributor", "description",
+                                            "rights", "version")]
+    params <- params[! names(params) %in% c("contributor", "description",
+                                            "rights", "version")]
+
     params["Class"] <- "AssessmentTest"
     object <- do.call(new, params)
+    object <- add_test_metadata(object, mt_list)
     return(object)
 }
 
@@ -237,8 +253,8 @@ test <- function(content, identifier = "test_identifier", title = "Test Title",
 #'   accessible to the candidate during the test/exam.
 #' @param calculator A character, optional; determines whether to show a
 #'   calculator to the candidate. Possible values:
-#'   - 'simple-calculator'
-#'   - 'scientific-calculator' (assigned by default).
+#'   - 'simple'
+#'   - 'scientific' (assigned by default).
 #' @param academic_grading A boolean, optional; enables to show to candidate at
 #'   the end of the testing a grade according to 5-point academic grade system
 #'   as a feedback; Default is `FALSE`.
@@ -274,6 +290,15 @@ test <- function(content, identifier = "test_identifier", title = "Test Title",
 #'   marking of questions. Default is `TRUE`.
 #' @param keep_responses A boolean, optional, determining whether to save the
 #'   candidate's answers from the previous attempt. Default is `FALSE`.
+#' @param contributor A list of objects [QtiContributor]-type that holds
+#'   metadata information about the authors.
+#' @param description A character string providing a textual description of the
+#'   content of this learning object.
+#' @param rights A character string describing the intellectual property rights
+#'   and conditions of use for this learning object. By default it takes value
+#'   from environment variable 'RQTI_RIGHTS'.
+#' @param version A character string representing the edition/version of this
+#'   learning object.
 #' @return An [AssessmentTestOpal] object
 #' @seealso [test()], [section()],
 #'   [AssessmentTestOpal], [AssessmentSection]
@@ -286,21 +311,53 @@ test <- function(content, identifier = "test_identifier", title = "Test Title",
 #' @export
 test4opal <- function(content, identifier = "test_identifier",
                       title = "Test Title", time_limit = 90L, max_attempts = 1L,
-                      files = NULL, calculator = "scientific-calculator",
+                      files = NULL, calculator = "scientific",
                       academic_grading = FALSE,
                       grade_label = c(en="Grade", de="Note"),
                       table_label = c(en="Grade", de="Note"),
                       navigation_mode = "nonlinear",
                       submission_mode = "individual", allow_comment = TRUE,
                       rebuild_variables = TRUE, show_test_time = TRUE,
-                      mark_items  = TRUE, keep_responses = FALSE) {
+                      mark_items  = TRUE, keep_responses = FALSE,
+                      contributor = list(), description = "",
+                      rights = Sys.getenv("RQTI_RIGHTS"), version = "0.0.9") {
 
     params <- as.list(environment())
     params <- Filter(Negate(is.null), params)
     params["section"] <- ifelse (length(unlist(params["content"])) == 1,
                                  list(params["content"]), as.list(params["content"]))
     params["content"] = NULL
-    # define test class
+    mt_list <- params[names(params) %in% c("contributor", "description",
+                                           "rights", "version")]
+    params <- params[! names(params) %in% c("contributor", "description",
+                                            "rights", "version")]
+
     params["Class"] <- "AssessmentTestOpal"
     object <- do.call(new, params)
+    object <- add_test_metadata(object, mt_list)
+    return(object)
+}
+
+add_test_metadata <- function(object, params) {
+    mtdata <- new("QtiMetadata", contributor = list(qti_contributor()),
+                  description = params$description,
+                  rights = params$rights, version = params$version)
+
+    if (length(params$contributor) != 0) {
+        mtdata@contributor <- params$contributor
+    } else {
+        contr <- unlist(lapply(object@section, getContributors))
+        contr_ar <- lapply(contr, function(x) list(x@contributor, x@role))
+        contr_unique <- contr[!duplicated(contr_ar)]
+        if (length(contr_unique) != 0) {
+            msg <- paste(sapply(contr_unique, function(x) paste0(x@contributor, " (", x@role, ")")),
+                         collapse = ", ")
+            msg <- paste0("Authors are found in exercises and added as",
+                          " contributors: ", msg, ".")
+            message(msg)
+            mtdata@contributor = contr_unique
+        }
+    }
+    object@metadata <- mtdata
+    return(object)
 }

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsglobal.org/xsd/imscp_v1p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imscp_v1p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/qtiv2p1_imscpv1p2_v1p0.xsd http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1p1.xsd http://www.imsglobal.org/xsd/imsqti_metadata_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_metadata_v2p1p1.xsd http://ltsc.ieee.org/xsd/LOM http://www.imsglobal.org/xsd/imsmd_loose_v1p3p2.xsd http://www.w3.org/1998/Math/MathML http://www.w3.org/Math/XMLSchema/mathml2/mathml2.xsd" identifier="test_identifier_manifest">
+  <organizations/>
+  <resources>
+    <resource identifier="test_identifier" type="imsqti_test_xmlv2p1" href="test_identifier.xml">
+      <file href="test_identifier.xml"/>
+      <metadata>
+        <lom xmlns="http://ltsc.ieee.org/xsd/LOM">
+          <lifeCycle>
+            <version>
+              <string>0.0.9</string>
+            </version>
+            <contribute>
+              <role>
+                <source>LOMv1.0</source>
+                <value>author</value>
+              </role>
+              <entity>BEGIN:VCARD
+FN:Andrey Shevandrin
+END:VCARD
+</entity>
+              <date>
+                <dateTime>2024-05-06</dateTime>
+              </date>
+            </contribute>
+          </lifeCycle>
+          <general>
+            <identifier>
+              <entry>test_identifier</entry>
+            </identifier>
+            <title>
+              <string>Test Title</string>
+            </title>
+            <description>
+              <string>
+This file is Copyright (C) 2024 Andrey Shevandrin. all rights reserved.</string>
+            </description>
+          </general>
+          <technical>
+            <format>IMS QTI 2.1</format>
+          </technical>
+          <rights>
+            <description>This file is Copyright (C) 2024 Andrey Shevandrin. all rights reserved.</description>
+          </rights>
+        </lom>
+      </metadata>
+      <dependency identifierref="id_task_5293"/>
+      <dependency identifierref="id_task_2599"/>
+    </resource>
+    <resource identifier="id_task_5293" type="imsqti_item_xmlv2p1" href="id_task_5293.xml">
+      <file href="id_task_5293.xml"/>
+    </resource>
+    <resource identifier="id_task_2599" type="imsqti_item_xmlv2p1" href="id_task_2599.xml">
+      <file href="id_task_2599.xml"/>
+    </resource>
+  </resources>
+</manifest>

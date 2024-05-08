@@ -20,7 +20,7 @@ test_that("Testing method createOutcomeDeclaration()
                choice_identifiers = c("1", "2", "3", "4"),
                points = c(1, 0, 0, 1)
     )
-    order1 <- new("Order",
+    order1 <- new("Ordering",
                   identifier = "q4",
                   title = "Order",
                   prompt = "Choose the correct order",
@@ -86,7 +86,7 @@ test_that("Testing method createOutcomeDeclaration() with
                           choice_identifiers = c("1", "2", "3", "4"),
                           points = c(1, 0, 0, 1)
                )
-               order1 <- new("Order",
+               order1 <- new("Ordering",
                              identifier = "q4",
                              title = "Order",
                              prompt = "Choose the correct order",
@@ -508,7 +508,7 @@ exam <- new("AssessmentTestOpal", identifier = "id_test",
                       test_path("file/test_fig2.jpg")),
             max_attempts = 5, time_limit = 100, allow_comment = TRUE,
             rebuild_variables = TRUE,
-            show_test_time = TRUE, calculator = "simple-calculator",
+            show_test_time = TRUE, calculator = "simple",
             keep_responses = TRUE
             )
 suppressMessages(createQtiTest(exam, "test1a9b56cf96", "TRUE"))

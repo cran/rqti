@@ -11,13 +11,15 @@ upload2opal(
   overwrite = TRUE,
   endpoint = NULL,
   open_in_browser = TRUE,
+  as_survey = FALSE,
   api_user = NULL,
   api_password = NULL
 )
 }
 \arguments{
 \item{test}{A length one character vector of \link{AssessmentTest},
-\link{AssessmentTestOpal} or \link{AssessmentItem} objects, Rmd or md files; required.}
+\link{AssessmentTestOpal} or \link{AssessmentItem} objects, Rmd/md or XML files;
+required.}
 
 \item{display_name}{A length one character vector to entitle file in OPAL;
 file name without extension by default; optional.}
@@ -32,12 +34,15 @@ with the specified display name is found, it will be overwritten. Default is
 \code{TRUE}.}
 
 \item{endpoint}{A string of endpoint of LMS Opal; by default it is got from
-environment variable \code{QTI_API_ENDPOINT}. To set a global environment
-variable, you need to call \code{Sys.setenv(QTI_API_ENDPOINT='xxxxxxxxxxxxxxx')}
+environment variable \code{RQTI_API_ENDPOINT}. To set a global environment
+variable, you need to call \code{Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')}
 or you can put these command into .Renviron.}
 
 \item{open_in_browser}{A boolean value; optional; it controls whether to open
 a URL in default browser. Default is \code{TRUE.}}
+
+\item{as_survey}{A boolean value; optional; it controls resource type (test
+r survey). Default is \code{FALSE}.}
 
 \item{api_user}{A character value of the username in the OPAL.}
 

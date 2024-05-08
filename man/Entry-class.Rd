@@ -23,7 +23,7 @@ with the task. By default, it takes the value of the identifier.}
 \item{\code{content}}{A list of character content to form the text of the question,
 which can include HTML tags. For tasks of the \link{Entry} type, it must also
 contain at least one instance of Gap objects, such as \linkS4class{TextGap},
-\link{NumericGap}, or \link{InlineChoice}.}
+\link{TextGapOpal}, \link{NumericGap}, or \link{InlineChoice}.}
 
 \item{\code{prompt}}{An optional character representing a simple question text,
 consisting of one paragraph. This can supplement or replace content in the
@@ -51,15 +51,15 @@ element of the list should be an instance of either \link{ModalFeedback},
 \item{\code{calculator}}{A character, optional, determining whether to show a
 calculator to the candidate. Possible values:
 \itemize{
-\item "simple-calculator"
-\item "scientific-calculator"
+\item "simple"
+\item "scientific"
 }}
 
 \item{\code{files}}{A character vector, optional, containing paths to files that will
 be accessible to the candidate during the test/exam.}
 
-\item{\code{qti_version}}{A character representing the QTI (Question and Test
-Interoperability) information model version. Default is 'v2p1'.}
+\item{\code{metadata}}{An object of class \link{QtiMetadata} that holds metadata information
+about the task.}
 }}
 
 \examples{
@@ -87,5 +87,5 @@ logarithm is the logarithm with base", new("InlineChoice",
                    identifier = "entry_example")
 }
 \seealso{
-\link{NumericGap}, \link{TextGap}, \link{InlineChoice}
+\link{NumericGap}, \link{TextGap}, \link{TextGapOpal}, \link{InlineChoice}
 }

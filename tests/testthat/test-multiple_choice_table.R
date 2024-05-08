@@ -78,7 +78,7 @@ test_that("Testing create_response_declaration_MultipleChoiceTable",{
 })
 
 test_that("Testing outcomeDeclaration MultipleChoiceTable",{
-    mct <- new("MultipleChoiceTable",
+    mct <- suppressMessages(new("MultipleChoiceTable",
               rows = c("Capulet", "Demetrius", "Lysander", "Prospero"),
               rows_identifiers  = c("C", "D", "L", "P"),
               cols = c("A Midsummer-Night's Dream", "Romeo and Juliet",
@@ -89,7 +89,7 @@ test_that("Testing outcomeDeclaration MultipleChoiceTable",{
               points = 4,
               title = "MultipleChoiceTable",
               prompt = "Match the following characters to the Shakespeare play they appeared in:"
-    )
+    ))
 
     example <- '<additionalTag><outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
 <defaultValue>
@@ -98,7 +98,7 @@ test_that("Testing outcomeDeclaration MultipleChoiceTable",{
 </outcomeDeclaration>
 <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
 <defaultValue>
-<value>4</value>
+<value>4.5</value>
 </defaultValue>
 </outcomeDeclaration>
 <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
@@ -114,4 +114,19 @@ test_that("Testing outcomeDeclaration MultipleChoiceTable",{
     example <- xml2::read_xml(example)
     expect_equal(sut, example)
 
+})
+test_that("Testing the constructor for MultipleChoiceTable class", {
+    sut <- multipleChoiceTable(content = list("<p>\"Multiple choice table\" task</p>"),
+                               rows = c("alfa", "beta", "gamma", "alpha"),
+                               rows_identifiers = c("a", "b", "g", "aa"),
+                               cols = c("A", "B", "G", "a"),
+                               cols_identifiers = c("as", "bs", "gs", "aas"),
+                               answers_identifiers = c("a as", "b bs", "g gs",
+                                                       "aa as", "a aas",
+                                                       "aa aas"))
+
+    xml_sut <- create_assessment_item(sut)
+
+    expect_no_error(xml2::read_xml(as.character(xml_sut)))
+    expect_s4_class(sut, "MultipleChoiceTable")
 })

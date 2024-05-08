@@ -183,3 +183,11 @@ test_that("Test createResponseProcessing() for SingleChoice class", {
   expected <- xml2::read_xml(example)
   equal_xml(sut, expected)
 })
+test_that("Testing the constructor for SingleChoice class", {
+    sut <- singleChoice(content = list("Some content"),
+                        choices = c("Answer_1","Answer_2","Answer_3"))
+    xml_sut <- create_assessment_item(sut)
+
+    expect_no_error(xml2::read_xml(as.character(xml_sut)))
+    expect_s4_class(sut, "SingleChoice")
+})

@@ -37,18 +37,17 @@ setClass("AssessmentTest", slots = c(identifier = "character",
                                      navigation_mode = "character",
                                      submission_mode = "character",
                                      section = "list",
-                                     qti_version = "character",
                                      time_limit = "numeric",
                                      max_attempts = "numeric",
                                      allow_comment = "logical",
                                      rebuild_variables = "logical",
                                      academic_grading = "logical",
                                      grade_label = "character",
-                                     table_label = "character"),
+                                     table_label = "character",
+                                     metadata = "QtiMetadata"),
     prototype = prototype(navigation_mode = "nonlinear",
                           submission_mode = "individual",
                           test_part_identifier = "test_part",
-                          qti_version = "v2p1",
                           time_limit = NA_integer_,
                           max_attempts = NA_integer_,
                           allow_comment = TRUE,
@@ -189,3 +188,12 @@ setMethod("prepareQTIJSFiles", signature(object = "AssessmentTest"),
               unlink(zip_file)
               return(NULL)
           })
+
+#' @include AssessmentTest.R
+#' @rdname createMetadata-methods
+#' @aliases createMetadata,AssessmentTest
+setMethod("createMetadata", signature(object = "AssessmentTest"),
+          function(object) {
+              create_metadata(object)
+          })
+

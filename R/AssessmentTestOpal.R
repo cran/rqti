@@ -56,10 +56,10 @@ setMethod("initialize", "AssessmentTestOpal", function(.Object, ...) {
 
     found_calc <- c(sapply(.Object@section, getCalculator, USE.NAMES = FALSE))
     if (any(c("simple", "simple-calculator") %in% found_calc)) {
-        .Object@calculator = "simple-calculator"
+        .Object@calculator = "simple"
     }
     if (any(c("scientific", "scientific-calculator") %in% found_calc)) {
-        .Object@calculator = "scientific-calculator"
+        .Object@calculator = "scientific"
     }
 
     validObject(.Object)
@@ -85,8 +85,10 @@ setMethod("createAssessmentTest", signature(object = "AssessmentTestOpal"),
                                          sep = ";")
               }
               if (!is.na(object@calculator)) {
-                  data_features <- paste(object@calculator, data_features,
-                                         sep = ";")
+                  calc_type <- NULL
+                  if ("simple" %in% object@calculator) calc_type <- "simple-calculator"
+                  if ("scientific" %in% object@calculator) calc_type <- "scientific-calculator"
+                  data_features <- paste(calc_type, data_features, sep = ";")
               }
               if (object@mark_items) {
                   data_features <- paste("mark-items", data_features,

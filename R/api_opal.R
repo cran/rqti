@@ -8,8 +8,8 @@
 #' @param api_user A character value of the username in the OPAL.
 #' @param api_password A character value of the password in the OPAL.
 #' @param endpoint A string of endpoint of LMS Opal; by default it is got from
-#'  environment variable `QTI_API_ENDPOINT`. To set a global environment
-#'  variable, you need to call `Sys.setenv(QTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
+#'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
 #'  or you can put these command into .Renviron.
 #'
 #' @section Authentication: To use OPAL API, you need to provide your
@@ -112,7 +112,8 @@ auth_opal <- function(api_user = NULL, api_password = NULL, endpoint = NULL) {
 #'authentication procedure has to be performed. See [auth_opal]
 #'
 #'@param test A length one character vector of [AssessmentTest],
-#'  [AssessmentTestOpal] or [AssessmentItem] objects, Rmd or md files; required.
+#'  [AssessmentTestOpal] or [AssessmentItem] objects, Rmd/md or XML files;
+#'  required.
 #'@param display_name A length one character vector to entitle file in OPAL;
 #'  file name without extension by default; optional.
 #'@param access An integer value, optional; it is responsible for publication
@@ -123,11 +124,13 @@ auth_opal <- function(api_user = NULL, api_password = NULL, endpoint = NULL) {
 #'  with the specified display name is found, it will be overwritten. Default is
 #'  `TRUE`.
 #'@param endpoint A string of endpoint of LMS Opal; by default it is got from
-#'  environment variable `QTI_API_ENDPOINT`. To set a global environment
-#'  variable, you need to call `Sys.setenv(QTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
+#'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
 #'  or you can put these command into .Renviron.
 #'@param open_in_browser A boolean value; optional; it controls whether to open
 #'  a URL in default browser. Default is `TRUE.`
+#'@param as_survey A boolean value; optional; it controls resource type (test
+#'r survey). Default is `FALSE`.
 #'@param api_user A character value of the username in the OPAL.
 #'@param api_password A character value of the password in the OPAL.
 #'@section Authentication: To use OPAL API, you need to provide your
@@ -137,8 +140,8 @@ auth_opal <- function(api_user = NULL, api_password = NULL, endpoint = NULL) {
 #'  password again, they will be extracted from the system credential store
 #'
 #'@return A list with the key, display name, and URL of the resource in Opal.
-#' @examplesIf interactive()
-#' file <- system.file("exercises/sc1.Rmd", package='rqti')
+#'@examplesIf interactive()
+#'file <- system.file("exercises/sc1.Rmd", package='rqti')
 #' upload2opal(file, "task 1", open_in_browser = FALSE)
 #'@importFrom utils browseURL menu
 #'@importFrom tools file_ext
@@ -146,6 +149,7 @@ auth_opal <- function(api_user = NULL, api_password = NULL, endpoint = NULL) {
 #'@export
 upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
                         endpoint = NULL, open_in_browser = TRUE,
+                        as_survey = FALSE,
                         api_user = NULL, api_password = NULL) {
 
     if (is.null(endpoint)) endpoint <- catch_endpoint()
@@ -162,14 +166,35 @@ upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
 
     if (!interactive()) display_name <- paste0("knit_", display_name)
 
-    # get resources with given display_name
-    rtype <- ifelse(is_test(file), "FileResource.TEST", "FileResource.QUESTION")
+    # get resources with given display_name and as_survey status
+    istest = is_test(file)
+    rtype <- if (istest && as_survey) {
+        "FileResource.SURVEY"
+    } else {
+        ifelse(istest, "FileResource.TEST", "FileResource.QUESTION")
+    }
+
     rdf <- get_resources_by_name(display_name, endpoint, rtype)
 
     if (nrow(rdf) > 0 && overwrite) {
 
         if (nrow(rdf) == 1) {
-            resp <- update_resource(file, rdf$key, endpoint)
+            curr_type <- rdf$resourceableTypeName
+            target_type <- "FileResource.TEST"
+            if (!istest) target_type <- "FileResource.QUESTION"
+            if (as_survey) target_type <- "FileResource.SURVEY"
+
+            if ((curr_type == "FileResource.TEST" && istest && !as_survey) ||
+                (curr_type == "FileResource.QUESTION" && !istest) ||
+                (curr_type == "FileResource.SURVEY" && istest && as_survey)) {
+               resp <- update_resource(file, rdf$key, endpoint)
+            } else {
+                stop("Current type and target type of the resouce is not equal.\n",
+                      "Current type: ", curr_type, ";\nTarget type:", target_type,
+                     "\n Create a new resource by assigning a display_name.\n",
+                     "Call upload2opal(... display_name = \"new_name\")",
+                     call. = FALSE)
+            }
         } else {
             message("Found files with the same display name: ",
                     nrow(rdf))
@@ -183,7 +208,7 @@ upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
             if (key %in% c(length(menu_options), 0)) return(NULL)
             # update the resource
             if (key %in% seq(length(menu_options) - 2)) {
-                resp <- update_resource(file, menu_options[key], endpoint)
+                resp <- update_resource(file, menu_options[key], rtype, endpoint)
             }
         }
     }
@@ -209,8 +234,8 @@ upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
 #' @param api_user A character value of the username in the OPAL.
 #' @param api_password A character value of the password in the OPAL.
 #' @param endpoint A string of endpoint of LMS Opal; by default it is got from
-#'  environment variable `QTI_API_ENDPOINT`. To set a global environment
-#'  variable, you need to call `Sys.setenv(QTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
+#'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
 #'  or you can put these command into .Renviron.
 #' @return A dataframe with attributes of user's resources.
 #' @examplesIf interactive()
@@ -249,8 +274,8 @@ get_resources_by_name <- function(display_name, endpoint = NULL, rtype = NULL) {
 #' @param display_name A length one character vector to entitle file in OPAL;
 #'  file name without extension by default; optional.
 #' @param endpoint A string of endpoint of LMS Opal; by default it is got from
-#'  environment variable `QTI_API_ENDPOINT`. To set a global environment
-#'  variable, you need to call `Sys.setenv(QTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
+#'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
 #'  or you can put these command into .Renviron.
 #' @param api_user A character value of the username in the OPAL.
 #' @param api_password A character value of the password in the OPAL.
@@ -291,7 +316,7 @@ upload_resource <- function(file, display_name, rtype, access,
     return(response)
 }
 
-update_resource <- function(file, id, endpoint = NULL) {
+update_resource <- function(file, id, rtype, endpoint = NULL) {
     if (is.null(endpoint)) endpoint <- catch_endpoint()
     url_upd <- paste0(endpoint, "restapi/repo/entries/", id, "/update")
     req <- request(url_upd) %>% req_method("PUT") %>%
@@ -324,11 +349,11 @@ is_logged <- function(endpoint = NULL) {
 }
 
 catch_endpoint <- function() {
-    endpoint <- Sys.getenv("QTI_API_ENDPOINT")
+    endpoint <- Sys.getenv("RQTI_API_ENDPOINT")
     if (endpoint == "") {
-        message("The enviroment variable QTI_API_ENDPOINT was empty, it was assigned the value \"https://bildungsportal.sachsen.de/opal/\"")
-        Sys.setenv(QTI_API_ENDPOINT="https://bildungsportal.sachsen.de/opal/")
-        endpoint <- Sys.getenv("QTI_API_ENDPOINT")
+        message("The enviroment variable RQTI_API_ENDPOINT was empty, it was assigned the value \"https://bildungsportal.sachsen.de/opal/\"")
+        Sys.setenv(RQTI_API_ENDPOINT="https://bildungsportal.sachsen.de/opal/")
+        endpoint <- Sys.getenv("RQTI_API_ENDPOINT")
     }
     return(endpoint)
 }

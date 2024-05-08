@@ -1,5 +1,5 @@
 test_that("Testing createItemBody for Order questions", {
-    order <- new("Order",
+    order <- new("Ordering",
                  content = list(""),
                  title = "Grand Prix of Bahrain",
                  prompt = "The following F1 drivers finished on the podium in the first ever Grand Prix of Bahrain. Can you rearrange them into the correct finishing order?",
@@ -23,7 +23,7 @@ test_that("Testing createItemBody for Order questions", {
 })
 
 test_that("Testing ResponseDeclaration for Order questions", {
-    order <- new("Order",
+    order <- new("Ordering",
                  content = list(""),
                  title = "Grand Prix of Bahrain",
                  prompt = "The following F1 drivers finished on the podium in the first ever Grand Prix of Bahrain. Can you rearrange them into the correct finishing order?",
@@ -45,7 +45,7 @@ test_that("Testing ResponseDeclaration for Order questions", {
 })
 
 test_that("Testing OutcomeDeclaration for Order questions", {
-    order <- new("Order",
+    order <- new("Ordering",
                     content = list(""),
                     title = "Grand Prix of Bahrain",
                     prompt = "The following F1 drivers finished on the podium in the first ever Grand Prix of Bahrain. Can you rearrange them into the correct finishing order?",
@@ -84,7 +84,7 @@ test_that("Testing OutcomeDeclaration for Order questions", {
 
 # Testing Order class without choices_identifiers for Order class
 test_that("Testing Order class", {
-    order <- new("Order",
+    order <- new("Ordering",
                     content = list(""),
                     title = "Grand Prix of Bahrain",
                     prompt = "The following F1 drivers finished on the podium in the first ever Grand Prix of Bahrain. Can you rearrange them into the correct finishing order?",
@@ -106,7 +106,7 @@ test_that("Testing Order class", {
 
 # Testing with modal Feedback
 test_that("Testing createResponseProcessing() for Order class", {
-    order <- new("Order",
+    order <- new("Ordering",
                     content = list(""),
                     title = "Grand Prix of Bahrain",
                     prompt = "The following F1 drivers finished on the podium in the first ever Grand Prix of Bahrain. Can you rearrange them into the correct finishing order?",
@@ -207,4 +207,12 @@ test_that("Testing createResponseProcessing() for Order class", {
     sut <- xml2::read_xml(responseDe)
     expected <- xml2::read_xml(example)
     expect_equal(sut, expected)
+})
+test_that("Testing the constructor for Ordering class", {
+    sut <- ordering(prompt = "Set the right order:",
+                    choices = c("Step1", "Step2", "Step3"))
+    xml_sut <- create_assessment_item(sut)
+
+    expect_no_error(xml2::read_xml(as.character(xml_sut)))
+    expect_s4_class(sut, "Ordering")
 })

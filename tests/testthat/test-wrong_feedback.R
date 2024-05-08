@@ -15,9 +15,7 @@ test_that("Testing method createModalFeedback() for WrongFeedback class", {
 })
 
 test_that("Testing method createResponseCondition() for WrongFeedback class", {
-    sut <- new("WrongFeedback", outcome_identifier = "FEEDBACKMODAL",
-                         show = FALSE,
-                         title = "Feedback wrong name",
+    sut <- wrongFeedback(show = FALSE, title = "Feedback wrong name",
                          content = list("<p>Text Feedback wrong</p>")
     )
 
@@ -47,3 +45,24 @@ test_that("Testing method createResponseCondition() for WrongFeedback class", {
     expected <- xml2::read_xml(example)
     expect_equal(sut, expected)
 })
+test_that("Testing the constructor for WrongFeedback class", {
+    sut <- wrongFeedback(content = list("Some comments"), title = "Feedback")
+
+    xml_sut_1 <- createModalFeedback(sut)
+    xml_sut_2 <- createResponseCondition(sut)
+
+    expect_no_error(xml2::read_xml(as.character(xml_sut_1)))
+    expect_no_error(xml2::read_xml(as.character(xml_sut_2)))
+    expect_s4_class(sut, "WrongFeedback")
+})
+test_that("Testing the constructor for ModalFeedback class", {
+    sut <- modalFeedback(content = list("Model answer"), title = "Feedback")
+
+    xml_sut_1 <- createModalFeedback(sut)
+    xml_sut_2 <- createResponseCondition(sut)
+
+    expect_no_error(xml2::read_xml(as.character(xml_sut_1)))
+    expect_no_error(xml2::read_xml(as.character(xml_sut_2)))
+    expect_s4_class(sut, "ModalFeedback")
+})
+

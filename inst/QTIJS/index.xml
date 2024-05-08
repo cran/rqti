@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE assessmentItem>
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="test_image" title="statistical" adaptive="false" timeDependent="false">
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="impassionate_grayfox" title="impassionate_grayfox" adaptive="false" timeDependent="false">
   <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
     <correctResponse>
       <value>ChoiceA</value>
@@ -13,7 +12,7 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
     <defaultValue>
-      <value>3</value>
+      <value>1</value>
     </defaultValue>
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
@@ -22,17 +21,48 @@
     </defaultValue>
   </outcomeDeclaration>
   <itemBody>
-    <pre class="r">
-      <code><br/>plot(x = c(1, 2), y = c(3, 5), xlab = "x", ylab = "y")</code>
-    </pre>
-    <p>
-      <img src="figure/unnamed-chunk-1-1.png"/>
-    </p>
+    <math>
+      <mrow>
+        <mover accent="true">
+          <mi>p</mi>
+          <mo>^</mo>
+        </mover>
+        <mo>±</mo>
+        <mrow>
+          <mi>z</mi>
+          <mo>⋅</mo>
+          <msqrt>
+            <mstyle displaystyle="true">
+              <mfrac>
+                <mrow>
+                  <mover accent="true">
+                    <mi>p</mi>
+                    <mo>^</mo>
+                  </mover>
+                  <mo>⋅</mo>
+                  <mrow>
+                    <mo>(</mo>
+                    <mrow>
+                      <mn>1</mn>
+                      <mo>-</mo>
+                      <mover accent="true">
+                        <mi>p</mi>
+                        <mo>^</mo>
+                      </mover>
+                    </mrow>
+                    <mo>)</mo>
+                  </mrow>
+                </mrow>
+                <mi>N</mi>
+              </mfrac>
+            </mstyle>
+          </msqrt>
+        </mrow>
+      </mrow>
+    </math>
     <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" maxChoices="1" orientation="vertical">
-      <simpleChoice identifier="ChoiceA">Histogram of Normal Distribution Values</simpleChoice>
-      <simpleChoice identifier="ChoiceB">Bernoulli Distribution</simpleChoice>
-      <simpleChoice identifier="ChoiceC">Histogram of Distribution of a numeric variable’s values</simpleChoice>
-      <simpleChoice identifier="ChoiceD">Poisson Distribution</simpleChoice>
+      <simpleChoice identifier="ChoiceA">a</simpleChoice>
+      <simpleChoice identifier="ChoiceB">b</simpleChoice>
     </choiceInteraction>
   </itemBody>
   <responseProcessing>

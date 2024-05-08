@@ -16,7 +16,11 @@ test(
   navigation_mode = "nonlinear",
   submission_mode = "individual",
   allow_comment = TRUE,
-  rebuild_variables = TRUE
+  rebuild_variables = TRUE,
+  contributor = list(),
+  description = "",
+  rights = Sys.getenv("RQTI_RIGHTS"),
+  version = "0.0.9"
 )
 }
 \arguments{
@@ -69,6 +73,19 @@ comments in each question. Default is \code{TRUE.}}
 \item{rebuild_variables}{A boolean, optional, enabling the recalculation of
 variables and reshuffling the order of choices for each item-attempt.
 Default is \code{TRUE.}}
+
+\item{contributor}{A list of objects \link{QtiContributor}-type that holds
+metadata information about the authors.}
+
+\item{description}{A character string providing a textual description of the
+content of this learning object.}
+
+\item{rights}{A character string describing the intellectual property rights
+and conditions of use for this learning object. By default it takes value
+from environment variable 'RQTI_RIGHTS'.}
+
+\item{version}{A character string representing the edition/version of this
+learning object.}
 }
 \value{
 An \link{AssessmentTest} object.

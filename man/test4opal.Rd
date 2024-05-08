@@ -11,7 +11,7 @@ test4opal(
   time_limit = 90L,
   max_attempts = 1L,
   files = NULL,
-  calculator = "scientific-calculator",
+  calculator = "scientific",
   academic_grading = FALSE,
   grade_label = c(en = "Grade", de = "Note"),
   table_label = c(en = "Grade", de = "Note"),
@@ -21,7 +21,11 @@ test4opal(
   rebuild_variables = TRUE,
   show_test_time = TRUE,
   mark_items = TRUE,
-  keep_responses = FALSE
+  keep_responses = FALSE,
+  contributor = list(),
+  description = "",
+  rights = Sys.getenv("RQTI_RIGHTS"),
+  version = "0.0.9"
 )
 }
 \arguments{
@@ -45,8 +49,8 @@ accessible to the candidate during the test/exam.}
 \item{calculator}{A character, optional; determines whether to show a
 calculator to the candidate. Possible values:
 \itemize{
-\item 'simple-calculator'
-\item 'scientific-calculator' (assigned by default).
+\item 'simple'
+\item 'scientific' (assigned by default).
 }}
 
 \item{academic_grading}{A boolean, optional; enables to show to candidate at
@@ -93,6 +97,19 @@ marking of questions. Default is \code{TRUE}.}
 
 \item{keep_responses}{A boolean, optional, determining whether to save the
 candidate's answers from the previous attempt. Default is \code{FALSE}.}
+
+\item{contributor}{A list of objects \link{QtiContributor}-type that holds
+metadata information about the authors.}
+
+\item{description}{A character string providing a textual description of the
+content of this learning object.}
+
+\item{rights}{A character string describing the intellectual property rights
+and conditions of use for this learning object. By default it takes value
+from environment variable 'RQTI_RIGHTS'.}
+
+\item{version}{A character string representing the edition/version of this
+learning object.}
 }
 \value{
 An \link{AssessmentTestOpal} object

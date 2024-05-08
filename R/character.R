@@ -143,10 +143,17 @@ setMethod("prepareQTIJSFiles", signature(object = "character"),
               if (!file.exists(object)) {
                   stop("The file does not exist", call. = FALSE)
               }
-              out_path <- file.path(dir, "/index.xml")
+              out_path <- file.path(dir, "index.xml")
               ext <- file_ext(object)
               if (ext %in% c("Rmd", "md")) rmd2xml(object, out_path)
               if (ext == "xml") file.copy(object, out_path)
               if (ext == "zip") zip::unzip(object, exdir = dir)
+              return(NULL)
+          })
+
+#' @rdname getContributors-methods
+#' @aliases getContributors,character
+setMethod("getContributors", signature(object = "character"),
+          function(object) {
               return(NULL)
           })

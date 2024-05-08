@@ -28,7 +28,7 @@ rqti_project <- function(path, ...) {
     if (dots$start_server) launch_qtijs <- "rqti::start_server()"
     # create Rprofile
     text <- c("library(rqti)",
-              paste0("Sys.setenv(QTI_API_ENDPOINT=\"", dots$url_endpoint, "\")"),
+              paste0("Sys.setenv(RQTI_API_ENDPOINT=\"", dots$url_endpoint, "\")"),
               launch_qtijs)
     contents <- paste(
         paste(text, collapse = "\n"),
@@ -68,7 +68,11 @@ rqti_project <- function(path, ...) {
         "                       academic_grading = TRUE,",
         "                       grade_label = \"Note\")\n",
         "# Step 4. Render Test using QTIJS server.",
+        "# Render test_opal using QTIJS server",
+        "render_qtijs(test_opal)",
+        "# Create zip archive with test",
         "zip_file <- createQtiTest(test, dir = \"upload\")",
+        "# Render zip archive using QTIJS server",
         "render_zip(zip_file)\n",
         "# Step 5. Upload to Opal via API or, alternatively, upload zip manually.",
         "upload2opal(test_opal)",

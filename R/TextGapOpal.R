@@ -25,6 +25,57 @@
 setClass("TextGapOpal", contains = "TextGap", slots = c(tolerance = "numeric"),
          prototype = prototype(tolerance = 0))
 
+#'Create object [TextGapOpal]
+#'
+#'@param solution A character vector containing the values considered as correct
+#'  answers.
+#'@param response_identifier A character value representing an identifier for
+#'  the answer. By default, it is generated as 'id_gap_dddd', where dddd
+#'  represents random digits.
+#'@param points A numeric value, optional, representing the number of points for
+#'  this gap. Default is 1
+#'@param placeholder A character value, optional, responsible for placing
+#'  helpful text in the text input field in the content delivery engine. Default
+#'  is "".
+#'@param expected_length A numeric value, optional, responsible for setting the
+#'  size of the text input field in the content delivery engine. Default value
+#'  is adjusted by solution size.
+#'@param case_sensitive A boolean value, determining whether the evaluation of
+#'  the correct answer is case sensitive. Default is `FALSE`.
+#'@param tolerance A numeric value defining how many characters will be taken
+#'  into account to tolerate spelling mistakes in the evaluation of candidate
+#'  answers. Default is 0.
+#'@return An object of class [TextGapOpal]
+#'@seealso [entry()][numericGap()][textGap()]
+#' @examples
+#'tgo_min <- textGapOpal("answer")
+#'
+#'tgo <- textGapOpal(solution = "answer",
+#'              response_identifier  = "id_gap_1234",
+#'              points = 2,
+#'              placeholder = "put your answer here",
+#'              expected_length = 20,
+#'              case_sensitive = TRUE,
+#'              tolerance = 2)
+#' @rdname textGapOpal_doc
+#'@export
+textGapOpal <- function(solution,
+                    response_identifier = generate_id(type = "gap"),
+                    points = 1,
+                    placeholder = "",
+                    expected_length = size_gap(solution),
+                    case_sensitive = FALSE,
+                    tolerance = 0){
+    params <- as.list(environment())
+    params$Class <- "TextGapOpal"
+    obj <- do.call("new", params)
+    return(obj)
+}
+
+#' @rdname textGapOpal_doc
+#' @export
+gapTextOpal <- textGapOpal
+
 #' @rdname createResponseProcessing-methods
 #' @aliases createResponseProcessing,TextGapOpal
 setMethod("createResponseProcessing", "TextGapOpal", function(object) {

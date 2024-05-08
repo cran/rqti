@@ -49,9 +49,6 @@ the test.
 
 \item{\code{section}}{A list containing one or more \link{AssessmentSection} objects.}
 
-\item{\code{qti_version}}{A character value, optional, representing the QTI
-information model version. Default is 'v2p1'.}
-
 \item{\code{time_limit}}{A numeric value, optional, controlling the amount of time in
 minutes which a candidate is allowed for this part of the test.}
 
@@ -81,6 +78,9 @@ language codes as names (e.g., c(en="Grade", de="Note")); during test
 creation, it takes the value for the language of the operating system.
 Default is c(en="Grade", de="Note").}
 
+\item{\code{metadata}}{An object of class \link{QtiMetadata} that holds metadata information
+about the test.}
+
 \item{\code{show_test_time}}{A boolean value, optional, determining whether to show
 the candidate elapsed processing time without time limit. Default is
 \code{FALSE}.}
@@ -88,8 +88,8 @@ the candidate elapsed processing time without time limit. Default is
 \item{\code{calculator}}{A character value, optional, determining whether to show a
 calculator to the candidate. Possible values:
 \itemize{
-\item "simple-calculator"
-\item "scientific-calculator".
+\item "simple"
+\item "scientific".
 }}
 
 \item{\code{mark_items}}{A boolean value, optional, determining whether to allow
