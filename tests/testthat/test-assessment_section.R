@@ -241,6 +241,7 @@ test_that("Testing values of slot prompt and slot identifier
 test_that("Testing of type of calculators in yaml section of Rmd file", {
 
     # Reading of tasks from Rmd files and create of unique identifiers
+    # no value for calculator
     path1 <- test_path("file/rmd/DirectedPair_with_table.Rmd")
     suppressMessages(path1obj <- Map(create_question_object, rep(path1, 4)))
     path1obj[[1]]@identifier <- "v1"
@@ -261,6 +262,7 @@ test_that("Testing of type of calculators in yaml section of Rmd file", {
     path3obj[[1]]@identifier <- "v111"
     path3obj[[2]]@identifier <- "v222"
 
+    # no value for calculator
     path4 <- test_path("file/rmd/OneInRowTable_rowid_colid_example.Rmd")
     suppressMessages(path4obj <- Map(create_question_object, rep(path4, 2)))
     path4obj[[1]]@identifier <- "v1111"
@@ -278,18 +280,18 @@ test_that("Testing of type of calculators in yaml section of Rmd file", {
     root_section_3 = suppressMessages(list(section(c(path2obj[[3]],
                                                      path3obj[[2]]))))
 
-    example_exam_1 <- new("AssessmentTestOpal",
+    example_exam_1 <- suppressWarnings(new("AssessmentTestOpal",
                           identifier = "id_test_1",
                           title = "Mock test",
-                          section = root_section_1)
-    example_exam_2 <- new("AssessmentTestOpal",
+                          section = root_section_1))
+    example_exam_2 <- suppressWarnings(new("AssessmentTestOpal",
                           identifier = "id_test_2",
                           title = "Mock test",
-                          section = root_section_2)
-    example_exam_3 <- new("AssessmentTestOpal",
+                          section = root_section_2))
+    example_exam_3 <- suppressWarnings(new("AssessmentTestOpal",
                           identifier = "id_test_2",
                           title = "Mock test",
-                          section = root_section_3)
+                          section = root_section_3))
 
     sut_1 <- example_exam_1@calculator
     sut_2 <- example_exam_2@calculator

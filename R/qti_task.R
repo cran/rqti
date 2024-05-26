@@ -196,9 +196,6 @@ create_prompt <- function(object) {
 
 #' Create XML file for question specification
 #'
-#' @usage create_qti_task(object,
-#'                 dir = NULL,
-#'                 verification = FALSE)
 #' @param object an instance of the S4 object ([SingleChoice], [MultipleChoice],
 #'   [Essay], [Entry], [Ordering], [OneInRowTable], [OneInColTable],
 #'   [MultipleChoiceTable], [DirectedPair]).
@@ -206,12 +203,15 @@ create_prompt <- function(object) {
 #'   default
 #' @param verification boolean, optional; to check validity of xml file, default
 #'   `FALSE`
+#' @param show_score boolean, optional; put div tag with score value. Default
+#' is `FALSE`.
 #' @return xml document.
 #' @name create_qti_task
 #' @rdname create_qti_task
 #' @aliases create_qti_task
 #' @importFrom textutils HTMLdecode
-create_qti_task <- function(object, dir = NULL, verification = FALSE) {
+create_qti_task <- function(object, dir = NULL, verification = FALSE,
+                            show_score = FALSE) {
     content <- as.character(create_assessment_item(object))
     # to handle reading of the xml with html entities
     # dtype <- "<!DOCTYPE assessmentItem PUBLIC \"-//W3C//DTD MathML 2.0//EN\" \"http://www.w3.org/Math/DTD/mathml3/mathml3.dtd\">"
@@ -237,11 +237,18 @@ create_qti_task <- function(object, dir = NULL, verification = FALSE) {
         dir <- dirname(dir)
     }
     if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+    # add tag div with printedVariable SCORE for QTIJS rendering
+    if (show_score) {
+        new_node <- xml2::read_xml('<div class="rqti-ai-result">Score:
+<printedVariable identifier="SCORE" format="%d" /></div>')
+        root_node <- xml2::xml_root(doc)
+        xml2::xml_add_child(root_node, new_node)
+    }
 
-    path <- paste0(dir, "/", file_name, ".xml")
-    xml2::write_xml(doc, path)
-    message(paste("see assessment item:", path))
-    return(stringr::str_remove(path, getwd()))
+    path_task <- file.path(dir, paste0(file_name, ".xml"))
+    xml2::write_xml(doc, path_task)
+    message("see assessment item: ", path_task)
+    return(stringr::str_remove(path_task, getwd()))
 }
 
 # verifies xml according to xsd scheme
@@ -255,7 +262,7 @@ verify_qti <- function(doc) {
 # returns manifest for task
 create_manifest_task <- function(object) {
     manifest <- tag("manifest", create_manifest_attributes(object))
-    metadata <- tag("metadata", c())
+    metadata <- createMetadata(object)
     organisations <- tag("organisations", c())
 
     file_name <- paste0(object@identifier, ".xml")
@@ -302,7 +309,7 @@ create_task_zip <- function(object, path = ".", verification = FALSE,
     tdir <- tempfile()
     dir.create(tdir)
 
-    task_path <- create_qti_task(object, tdir)
+    task_path <- suppressMessages(create_qti_task(object, tdir))
 
     manifest <- create_manifest_task(object)
     doc_manifest <- xml2::read_xml(as.character(manifest))
@@ -310,5 +317,6 @@ create_task_zip <- function(object, path = ".", verification = FALSE,
     xml2::write_xml(doc_manifest, manifest_path)
 
     path <- zip_wrapper(file_name, tdir, path, NULL, zip_only)
+    message("see zip with assessment item: ", path)
     return(path)
 }

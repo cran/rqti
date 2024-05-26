@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="impassionate_grayfox" title="impassionate_grayfox" adaptive="false" timeDependent="false">
-  <responseDeclaration identifier="RESPONSE" cardinality="single" baseType="identifier">
+<!DOCTYPE assessmentItem>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="TOPIC1_Q001" title="A meaningful title that can be displayed in the LMS" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="directedPair">
     <correctResponse>
-      <value>ChoiceA</value>
+      <value>row49_ col36</value>
+      <value>row39_ col27</value>
+      <value>row55_ col25</value>
+      <value>row23_ col6</value>
+      <value>row123_ col36</value>
     </correctResponse>
+    <mapping defaultValue="0">
+      <mapEntry mapKey="row49_ col36" mappedValue="0.5"/>
+      <mapEntry mapKey="row39_ col27" mappedValue="1"/>
+      <mapEntry mapKey="row55_ col25" mappedValue="1"/>
+      <mapEntry mapKey="row23_ col6" mappedValue="1"/>
+      <mapEntry mapKey="row123_ col36" mappedValue="1"/>
+    </mapping>
   </responseDeclaration>
   <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
     <defaultValue>
@@ -12,7 +24,7 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
     <defaultValue>
-      <value>1</value>
+      <value>4.5</value>
     </defaultValue>
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
@@ -20,67 +32,47 @@
       <value>0</value>
     </defaultValue>
   </outcomeDeclaration>
+  <outcomeDeclaration identifier="FEEDBACKBASIC" cardinality="single" baseType="identifier">
+    <defaultValue>
+      <value>empty</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="FEEDBACKMODAL" cardinality="multiple" baseType="identifier"/>
   <itemBody>
-    <math>
-      <mrow>
-        <mover accent="true">
-          <mi>p</mi>
-          <mo>^</mo>
-        </mover>
-        <mo>±</mo>
-        <mrow>
-          <mi>z</mi>
-          <mo>⋅</mo>
-          <msqrt>
-            <mstyle displaystyle="true">
-              <mfrac>
-                <mrow>
-                  <mover accent="true">
-                    <mi>p</mi>
-                    <mo>^</mo>
-                  </mover>
-                  <mo>⋅</mo>
-                  <mrow>
-                    <mo>(</mo>
-                    <mrow>
-                      <mn>1</mn>
-                      <mo>-</mo>
-                      <mover accent="true">
-                        <mi>p</mi>
-                        <mo>^</mo>
-                      </mover>
-                    </mrow>
-                    <mo>)</mo>
-                  </mrow>
-                </mrow>
-                <mi>N</mi>
-              </mfrac>
-            </mstyle>
-          </msqrt>
-        </mrow>
-      </mrow>
-    </math>
-    <choiceInteraction responseIdentifier="RESPONSE" shuffle="true" maxChoices="1" orientation="vertical">
-      <simpleChoice identifier="ChoiceA">a</simpleChoice>
-      <simpleChoice identifier="ChoiceB">b</simpleChoice>
-    </choiceInteraction>
+    <p>Specify any kind of table with the table entries representing the number of points for the response. The table has to be the last element of the question section!</p>
+    <p>The <code>rqti</code> package is clever enough to transform your table into the appropriate QTI object (single choice or multiple choice). Of course you can also just load a csv and print it as a markdown table via <code>knitr::kable(yourtable)</code></p>
+    <p>Use visual editing mode in RStudio to quickly change your table.</p>
+    <matchInteraction responseIdentifier="RESPONSE" shuffle="true" maxAssociations="5">
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="row49_" fixed="false" matchMax="1">4*9 =</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="row39_" fixed="false" matchMax="1">3*9 =</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="row55_" fixed="false" matchMax="1">5*5 =</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="row23_" fixed="false" matchMax="1">2*3 =</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="row123_" fixed="false" matchMax="1">12*3 =</simpleAssociableChoice>
+      </simpleMatchSet>
+      <simpleMatchSet>
+        <simpleAssociableChoice identifier="col27" fixed="true" matchMax="5">27</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="col36" fixed="true" matchMax="5">36</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="col25" fixed="true" matchMax="5">25</simpleAssociableChoice>
+        <simpleAssociableChoice identifier="col6" fixed="true" matchMax="5">6</simpleAssociableChoice>
+      </simpleMatchSet>
+    </matchInteraction>
   </itemBody>
   <responseProcessing>
     <responseCondition>
       <responseIf>
-        <isNull>
-          <variable identifier="RESPONSE"/>
-        </isNull>
-      </responseIf>
-      <responseElseIf>
-        <match>
-          <variable identifier="RESPONSE"/>
-          <correct identifier="RESPONSE"/>
-        </match>
+        <not>
+          <isNull>
+            <variable identifier="RESPONSE"/>
+          </isNull>
+        </not>
         <setOutcomeValue identifier="SCORE">
-          <variable identifier="MAXSCORE"/>
+          <sum>
+            <variable identifier="SCORE"/>
+            <mapResponse identifier="RESPONSE"/>
+          </sum>
         </setOutcomeValue>
-      </responseElseIf>
+      </responseIf>
     </responseCondition>
     <responseCondition>
       <responseIf>
@@ -104,5 +96,50 @@
         </setOutcomeValue>
       </responseIf>
     </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <isNull>
+          <variable identifier="RESPONSE"/>
+        </isNull>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">empty</baseValue>
+        </setOutcomeValue>
+      </responseIf>
+      <responseElseIf>
+        <lt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MAXSCORE"/>
+        </lt>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">incorrect</baseValue>
+        </setOutcomeValue>
+      </responseElseIf>
+      <responseElse>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">correct</baseValue>
+        </setOutcomeValue>
+      </responseElse>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <and>
+          <gte>
+            <variable identifier="SCORE"/>
+            <baseValue baseType="float">0</baseValue>
+          </gte>
+        </and>
+        <setOutcomeValue identifier="FEEDBACKMODAL">
+          <multiple>
+            <variable identifier="FEEDBACKMODAL"/>
+            <baseValue baseType="identifier">modal_feedback</baseValue>
+          </multiple>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
   </responseProcessing>
+  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show">
+    <p>Provide your feedback here. For tables it is difficult to provide useful feedback because there are usually many questions. But most learning management systems will at least show which answers are correct and incorrect.</p>
+  </modalFeedback>
+  <div class="rqti-ai-result">Score:
+<printedVariable identifier="SCORE" format="%d"/></div>
 </assessmentItem>
