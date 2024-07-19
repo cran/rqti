@@ -252,6 +252,10 @@ const QTI = {
   postResponseVariable: postResponseVariable,
 };
 
+    let url_address = new URL(window.location.href);
+    const show_mfb = url_address.searchParams.get("mfb");
+
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // logging.js
@@ -788,8 +792,6 @@ function transform(elem) {
     break;
   case "assessmentItem":
     addCommentInteraction(elem, T);
-    // it is muted in 0.2.1 to show only feedback onchange() event
-    //addModalFeedback(elem, T);
     addNavigation(elem, T);
     if (!allowSkipping(item))
       T.attribs.push({name:"class", value:MANDATORY});
@@ -872,7 +874,6 @@ function transform(elem) {
     T.tag = elem.getAttribute(TAG) || "span";
     break;
   }
-
   if (T.tag != null) {
     let [opentag,closetag]
         = getTags(T.tag, transformAttributes(elem, T.attribs));
@@ -1024,22 +1025,6 @@ function transform(elem) {
     }
   }
 
-  // Adds a modal feedback message
-  // it is muted in 0.2.1 to show fb only for onchange() event
-/*  function addModalFeedback(elem, T) {
-      let mfb = elem.querySelector('[identifier="modal_feedback"]');
-      if (mfb) {
-          let ttl = mfb.getAttribute("title");
-          html = "<hr><h3>Modal Feedback (not shown to students)";
-          if (ttl != null) {
-              html += ": " + ttl;
-          }
-          html += "</h3>";
-          html += mfb.innerHTML;
-          T.content.push(html);
-      }
-  }*/
-
   // Adds "nav" element to assessmentTest, testPart,
   // assessmentSection, and assessmentItem.
   function addNavigation(elem, T) {
@@ -1083,8 +1068,9 @@ function transform(elem) {
       T.attribs.push({name:"type", value:type, prefix: false});
       T.attribs.push({name:"name", value:getId(interaction,"RG"),prefix:false});
       T.tag = "input";
+      let id_resp = interaction.getAttribute("responseIdentifier")
       if (interaction.tagName=="choiceInteraction") {
-        T.wrapstart = `<div class='${INPUT_WRAP}'><label class="${CHOICE}">`;
+        T.wrapstart = `<div class='${INPUT_WRAP}'><label class="${CHOICE}"><span id=rqti-icon ${RESPONSE_ID}=${id_resp} class=visible></span>`;
         T.wrapend = "</label></div>";
       } else {
         T.wrapstart = (T.wrapstart||"")
@@ -1114,6 +1100,8 @@ function transform(elem) {
       }
       T.tag = "li";
       T.attribs.push({name:"draggable", value:"true", prefix:false});
+      let id_resp_ord = interaction.getAttribute("responseIdentifier")
+      T.content.unshift(`<span id=rqti-icon ${RESPONSE_ID}=${id_resp_ord} class=visible></span>`);
       if (--interaction.choices===0) {
         T.wrapend = (T.wrapend||"") + `</ol>`;
         delete interaction.choices;
@@ -1181,8 +1169,10 @@ function transform(elem) {
 
   // Generates a select for inlineChoiceInteraction
   function transformInlineChoiceInteraction(elem, T) {
+    let id_resp = interaction.getAttribute("responseIdentifier");
     T.tag = "select";
     T.content.push(`<option selected="true">Choose...</option>`);
+    T.wrapstart = `<span id=rqti-icon ${RESPONSE_ID}=${id_resp}></span>`;
   }
 
   // Generates textarea for an extendedTextInteraction
@@ -1193,10 +1183,11 @@ function transform(elem) {
 
   // Generates an input type=text for textEntryInteraction
   function transformTextEntryInteraction(elem, T) {
+    id_resp = elem.getAttribute("responseIdentifier");
     let ex_len = elem.getAttribute("expectedLength");
     T.tag = "span";
     T.content.unshift(
-      `<input type="text" placeholder="${getPlaceholder(elem, "")}" size="${ex_len}"/>`);
+      `<span id=rqti-icon ${RESPONSE_ID}=${id_resp}></span><input type="text" placeholder="${getPlaceholder(elem, "")}" size="${ex_len}"/>`);
   }
 
   // Returns placeholder text for an input or textarea.
@@ -1274,32 +1265,37 @@ function transform(elem) {
     });
     let maxAssocs = +elem.getAttribute("maxAssociations");
 	if (maxAssocs == 0) {
+	    let id_resp = elem.getAttribute("responseIdentifier");
 		let html = `<div class="rqti-container">
 		<div id="rqti-left">`;
 		rows.forEach(row=>html += `<div class="rqti-list" draggable="true" id-row=${row[0]}>${row[1]}</div>`);
-		html += `</div><div id="rqti-right" data-qtijs-response-identifier="RESPONSE">`;
+		html += `</div><div id="rqti-right" data-qtijs-response-identifier=${id_resp}>`;
 		cols.forEach(col=>html += `<div class="rqti-row">
         <div class="rqti-dropzone">
 			drop here
 		</div>
+		<span id=rqti-icon ${RESPONSE_ID}=${id_resp} class=visible>
+		<input type="hidden" class="rqti-hidden" ${ID}="${col[0]}" name="${getId(interaction,"RG")}" id-col="${col[0]}" id-row="" value="">
+		</span>
 		<div class="rqti-order-label">${col[1]}</div>
-		<input type="hidden" class="rqti-hidden" ${ID}="some_id2" name="${getId(interaction,"RG")}" id-col="${col[0]}" id-row="" value="">
+
 		</div>`);
 		html += `</div></div>`;
 		T.content.push(html);
 	} else {
     // let maxAssocs = +elem.getAttribute("maxAssociations")||1;
     let type = maxAssocs==1? "radio": "checkbox";
+    let id_resp = elem.getAttribute("responseIdentifier");
     let cell = (row,col)=>
-        `<td><input ${ID}="${row[0]} ${col[0]}"`
-        + ` name="${getId(interaction,"RG")}" type="${type}"/></td>`;
+        `<td><label class=rqti-table-checkbox id=rqti-icon ${RESPONSE_ID}=${id_resp}><input ${ID}="${row[0]} ${col[0]}"`
+        + ` name="${getId(interaction,"RG")}" type="${type}"/><span></span></label></td>`;
     let html = `<table class="${MATCH_TABLE} ${PIVOTABLE}">`;
 
-    html += "<tr><th></th>";
+    html += "<tr class=rqti-table-head><th></th>";
     cols.forEach(col=>html += `<th>${col[1]}</th>`);
     html += "</tr>";
     rows.forEach(row=>{
-      html += `<tr><th>${row[1]}</th>`;
+      html += `<tr class=rqti-table-row><th>${row[1]}</th>`;
       cols.forEach(col=>html += cell(row,col));
       html += "</tr>";
     });
@@ -1787,7 +1783,6 @@ function setupInputInteraction(interaction) {
   function handleResponse(evt) {
     const input = evt.currentTarget;
     evt.stopPropagation();
-
     if (input.tagName=="BUTTON"
         || input.tagName=="SELECT"
         || input.tagName=="TEXTAREA") {
@@ -1892,6 +1887,11 @@ function setupInputInteraction(interaction) {
     switch(input.tagName) {
     case "INPUT":
       switch(input.getAttribute("type")) {
+      case "hidden":
+        responseVariable.value=[];
+        [...interaction.querySelectorAll('input[class="rqti-hidden"]')]
+           .forEach(el => {responseVariable.value.push(el.value)});
+        break;
       case "radio":
       case "checkbox":
         // choiceInteraction, hottextInteraction, matchInteraction
@@ -2137,8 +2137,10 @@ function setupDragAndDropInteraction(interaction) {
         });
       }
       value = choices.map(choice=>choice.getAttribute(ID));
-      if (maxChoices && maxChoices<value.length)
-        value = value.slice(0, maxChoices);
+      // rqti: mute this part to deliver right point for ordering with points per answer
+/*      if (maxChoices && maxChoices<value.length)
+        value = value.slice(0, maxChoices);*/
+
 
     } else if (type=="associateInteraction") {
       let table = interaction.querySelector(ASSOC_TABLE_SEL);
@@ -2161,7 +2163,6 @@ function setupDragAndDropInteraction(interaction) {
           : null;
       }).filter(pair=>pair!=null);
     }
-
     postResponseVariable(interaction, value);
   }
 }
@@ -2790,7 +2791,6 @@ function postResponseVariable(htmlInteraction, value, variable) {
   let item = decl.elem.parentElement;
   let htmlItem = getHTMLItemById(item.id);
   let qtiInteraction = QTI.DOM.getElementById(htmlInteraction.id);
-
   if (value !== undefined)
     decl.value = value;
   setCompletionStatus(decl.elem, "unknown", "not_attempted");
@@ -3553,7 +3553,6 @@ function mapEntry(elem) {
 // and cardinality of the variable, if possible.
 function coerce(decl, value, defaultValue) {
   let result=value;
-
   if (result===null && defaultValue)
     result = defaultValue;
   if (Array.isArray(result)
@@ -3652,7 +3651,6 @@ function responseProcessing(item) {
     processingComplete(elem, processing);
     outcomeProcessing()
   };
-
   if (rpblocks.length) {
     rpblocks.forEach(rp=>{
       INFO("responseProcessing", identifier(item), clock()+"msecs");
@@ -3758,6 +3756,7 @@ function processingComplete(elem, processing) {
   triggerShowHide(elem);
   updatePrintedVariables(elem);
   updateMathMLVariables(elem);
+  updateResultIcons(elem);
   pivotTables(document)
 }
 
@@ -3795,6 +3794,10 @@ function triggerShowHide(item) {
       let triggered = elem.classList.contains(TRIGGERED);
       if (!value || (Array.isArray(value) && value.length==0))
         value = getDefaultValue(decl);
+
+      if (show_mfb == 1 && !value) {
+          value = "modal_feedback";
+      }
       if (matchesOrMember(id, value)) {
          if (!triggered)
           setDirty(item);
@@ -3815,6 +3818,121 @@ function triggerShowHide(item) {
       }
     }
   });
+}
+
+// Updates result icons
+function updateResultIcons(item) {
+    let spanIcons = [...document.querySelectorAll('[id="rqti-icon"]')];
+    let count_order = 0;
+    spanIcons.forEach(el=>{
+        var resp_id = el.getAttribute(RESPONSE_ID);
+        let base_type = item.querySelector(`responseDeclaration[identifier=${resp_id}]`).getAttribute("baseType");
+        let cardinality = item.querySelector(`responseDeclaration[identifier=${resp_id}]`).getAttribute("cardinality");
+        switch(base_type) {
+        case "identifier":
+            let resp_user = item.declarations[el.getAttribute(RESPONSE_ID)].value;
+            if (cardinality === "ordered") {
+                if (resp_user !== null) {
+                    let resp_id = el.parentElement.getAttribute(ID);
+                    let corr_resp = item.declarations["RESPONSE"].correctResponse;
+                    add_span_icon(corr_resp[count_order] === resp_user[count_order], el);
+                    count_order += 1;
+                }
+            } else {
+                if (resp_user === null) return;
+                let type_interaction = el.nextElementSibling.getAttribute(TAG);
+                switch(type_interaction) {
+                    case "simpleChoice":
+                        let resp_id = el.nextElementSibling.getAttribute(ID);
+                        let was_given = resp_user.includes(resp_id);
+                        if (was_given) {
+                            let resp_corr = item.declarations["RESPONSE"].correctResponse;
+                            add_span_icon(resp_corr.includes(resp_id), el);
+                        } else {
+                            el.removeAttribute("class");
+                            el.className = "visible";
+                        };
+                        break;
+                    case "inlineChoiceInteraction":
+                        let resp_corr = item.declarations[el.getAttribute(RESPONSE_ID)].correctResponse;
+                        add_span_icon(resp_corr === resp_user, el, false);
+                        break;
+                }
+            }
+            break;
+        case "float":
+            let resp_id_flt = el.getAttribute(RESPONSE_ID)
+            let resp_user_flt = item.declarations[resp_id_flt].value;
+            if (resp_user_flt !== null && resp_user_flt !== "") {
+                let resp_corr = item.declarations[resp_id_flt].correctResponse;
+                add_span_icon(resp_corr === Number(resp_user_flt), el, false);
+            } else {
+                el.removeAttribute("class");
+            };
+
+            break;
+        case "string":
+            let resp_id_str = el.getAttribute(RESPONSE_ID)
+            let mapping_corr = item.declarations[resp_id_str].mapping.entries;
+            let resp_corr = Object.keys(mapping_corr).map(key => mapping_corr[key].mapKey);
+            let register = Object.keys(mapping_corr).map(key => mapping_corr[key].caseSensitive);
+            let case_sensitive = register.some(value => value === 'true');
+            let resp_user_str = item.declarations[resp_id_str].value;
+            if (!case_sensitive && resp_user_str !== null) {
+                resp_user_str = resp_user_str.toLowerCase();
+                resp_corr = resp_corr.map(value => value.toLowerCase());
+            };
+            if (resp_user_str != null && resp_user_str !== "") {
+                add_span_icon(resp_corr.includes(resp_user_str), el, false);
+            } else {
+                el.removeAttribute("class");
+            };
+            break;
+        case "directedPair":
+            let resp_corr_tbl = item.declarations[resp_id].correctResponse;
+            let max_assoc= item.querySelector(`matchInteraction`).getAttribute("maxAssociations");
+            let is_table = (max_assoc != 0)? true: false;
+            if (is_table) {
+                let resp_cell_tbl = el.querySelector('input').getAttribute(ID);
+                let is_checked = el.querySelector('input').checked;
+                if (is_checked) {
+                    if (resp_corr_tbl.includes(resp_cell_tbl)) {
+                        el.classList.add("rqti-table-right");
+                    } else {
+                        el.classList.add("rqti-table-wrong")
+                    };
+                } else {
+                    el.removeAttribute("class");
+                    el.className = "rqti-table-checkbox"
+                };
+            } else { // as directd pair
+                let resp_dp = el.querySelector('input').getAttribute("value");
+                if (resp_dp != "") {
+                    if (resp_corr_tbl.includes(resp_dp)) {
+                        el.classList.remove("rqti-incorrect");
+                        el.classList.add("rqti-correct");
+                    } else {
+                        el.classList.remove("rqti-correct");
+                        el.classList.add("rqti-incorrect");
+                    };
+                } else {
+                    el.removeAttribute("class");
+                    el.className = "visible";
+                };
+            };
+            break;
+        }; // end of switch
+    }); // end of for each for span
+}
+
+function add_span_icon(cond, element, vis = true) {
+    if (cond) {
+        element.className = "rqti-correct";
+        if (vis) element.classList.add("visible");
+    } else {
+        element.className = "rqti-incorrect";
+        if (vis) element.classList.add("visible");
+    };
 }
 
 // Updates printed variables with latest variable values.
@@ -4418,7 +4536,9 @@ function match(a, b) {
   let result =
       a==b
       || (Array.isArray(a) && Array.isArray(b) && a.length==b.length
-          && a.filter(v=>!b.includes(v)).length==0);
+          // this conditions was changed for rqti package ordering type per answers=F
+          //&& a.filter(v=>!b.includes(v)).length==0);
+          && a.every((value, index) => value === b[index]));
   return result;
 }
 

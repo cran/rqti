@@ -86,6 +86,7 @@ build_dataset <- function(tdir, level, names = NULL, hide_filename) {
             length(ai_files), " - files with assessment items")
 
     if (length(ai_files) > 0) db <- get_titles(ai_files, tdir)
+
     else {
         warning("In given archive files with exercises are not found.\n",
                 "The \'title\' column will be skipped in the final dataframe",
@@ -116,8 +117,17 @@ build_dataset <- function(tdir, level, names = NULL, hide_filename) {
     return(df)
 }
 
+safe_iconv <- function(x, from, to) {
+    tryCatch(
+        iconv(x, from = from, to = to),
+        error = function(e) {
+            return(x)
+        }
+    )
+}
+
 make_name_unique <- function(file, possible_name) {
-    possible_name <- iconv(possible_name, from = "CP850", to = "UTF-8")
+    possible_name <- safe_iconv(possible_name, from = "CP850", to = "UTF-8")
     dir_path <- dirname(file)
     content <- xml2::read_xml(file)
     root <- xml2::xml_name(xml2::xml_root(content))
@@ -135,11 +145,13 @@ extract_xml <- function(file) {
     dir.create(tdir)
 
     xml_list <- list.files(path = zdir,full.names = TRUE, pattern = ".xml")
+    check_valid_utf8(xml_list)
     file.copy(xml_list, tdir, overwrite = TRUE)
     xml_list <- list.files(path = tdir,full.names = TRUE)
     Map(make_name_unique, xml_list, basename(xml_list))
 
     zip_files <- list.files(path = zdir, pattern = ".zip")
+    check_valid_utf8(zip_files)
     Map(get_all_xml, zip_files, zdir, tdir)
     return(tdir)
 }
@@ -320,7 +332,13 @@ get_info_identifier <- function(node, options_node) {
     corr_values <- get_value(corr_res)
 
     cand_res <- xml2::xml_find_all(node, ".//d1:candidateResponse")[-1]
-    cand_values <- get_value(cand_res)
+    if (length(cand_res) !=0) {
+        cand_values <- get_value(cand_res)
+    } else {
+        cand_values <-  rep("", length(corr_values))
+    }
+
+
 
     choice_seq <- xml2::xml_attr(options_node, "choiceSequence")
 
@@ -430,12 +448,8 @@ get_info_float <- function(node) {
         if (length(cand_values) == 0) cand_values = ""
         cand <- append(cand, cand_values)
 
-        expression <- paste0(".//d1:outcomeVariable[",
-                             "contains(@identifier, \'SCORE\') and ",
-                             "starts-with(@identifier, \'SCORE\') and ",
-                             "contains(@identifier, \'",
-                             id,
-                             "\')]")
+        expression <- paste0(".//d1:outcomeVariable[@identifier=\'SCORE_",
+                             id, "\']")
         score <- xml2::xml_find_all(node, expression)
         if (length(score) == 0) {
             score <- xml2::xml_find_all(node, ".//d1:outcomeVariable[@identifier='SCORE']")
@@ -444,12 +458,8 @@ get_info_float <- function(node) {
         if (length(score) == 0) score_value <- "0"
         score_values <- append(score_values, score_value)
 
-        expression <- paste0(".//d1:outcomeVariable[",
-                             "contains(@identifier, \'MAXSCORE\') and ",
-                             "starts-with(@identifier, \'MAXSCORE\') and ",
-                             "contains(@identifier, \'",
-                             id,
-                             "\')]")
+        expression <- paste0(".//d1:outcomeVariable[@identifier=\'MAXSCORE_",
+                             id, "\']")
         maxscore <- xml2::xml_find_all(node, expression)
         if (length(maxscore) == 0) {
             maxscore <- xml2::xml_find_all(node, ".//d1:outcomeVariable[@identifier='MAXSCORE']")
@@ -506,6 +516,7 @@ get_all_xml <- function(file, indir, exdir) {
     zip_file <- file.path(indir, file)
     zip::unzip(zip_file, exdir = exdir, junkpaths = TRUE)
     content <- zip::zip_list(zip_file)$filename
+    check_valid_utf8(content)
     files <- file.path(exdir, content)
     files <- files[grep(".xml", files)]
 
@@ -532,4 +543,13 @@ get_titles <- function(files, folder) {
         }
     }
     return(result)
+}
+
+check_valid_utf8 <- function(input) {
+    not_valid <- input[!validUTF8(input)]
+    if (length(not_valid) > 0) {
+        stop("Some file names do not match Utf-8 encoding: ", not_valid,
+             call. = FALSE)
+    }
+    return(NULL)
 }

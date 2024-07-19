@@ -299,6 +299,121 @@ get_resource_url <- function(display_name, endpoint = NULL,
     return(url)
 }
 
+#' Get elements of the course by courseId
+#'
+#' @param course_id A length one character vector with course id.
+#' @param api_user A character value of the username in the OPAL.
+#' @param api_password A character value of the password in the OPAL.
+#' @param endpoint A string of endpoint of LMS Opal; by default it is got from
+#'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
+#'  or you can put these command into .Renviron.
+#' @return A dataframe with the elements of the course (fields: nodeId,
+#' shortTitle, shortName, longTitle)
+#' @examplesIf interactive()
+#' df <- get_course_elements("89068111333293")
+#' @export
+get_course_elements <- function(course_id, api_user = NULL, api_password = NULL,
+                                endpoint = NULL) {
+    if (is.null(endpoint)) endpoint <- catch_endpoint()
+    # check auth
+    if (!is_logged(endpoint) || !is.null(api_user) ||  !is.null(api_password)) {
+        user_id <- auth_opal(api_user, api_password)
+        if (is.null(user_id)) return(NULL)
+    }
+    url_elem <- paste0(endpoint, "restapi/repo/courses/", course_id, "/elements")
+    req <- request(url_elem) %>%
+        req_headers("X-OLAT-TOKEN"=Sys.getenv("X-OLAT-TOKEN"))
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+    parse <- resp_body_xml(response)
+    rlist <- xml2::as_list(parse)
+
+    is_not_neg_one <- function(node) {
+        pos <- as.numeric(node$position[[1]])
+        return(pos != -1)
+    }
+    flist <- rlist$courseNodeVOes[sapply(rlist$courseNodeVOes, is_not_neg_one)]
+    get_values <- function(item, field) {
+        ifelse(length(unlist(item[field])) == 0, NA, item[field])
+    }
+    ids <- unlist(Map(get_values, flist, "id"), use.names = FALSE)
+    shortTitles <- unlist(Map(get_values, flist, "shortTitle"), use.names = FALSE)
+    shortNames <- unlist(Map(get_values, flist, "shortName"), use.names = FALSE)
+    longTitles <- unlist(Map(get_values, flist, "longTitle"), use.names = FALSE)
+    df <- data.frame(nodeId=ids, shortTitle=shortTitles, shortName=shortNames,
+                     longTitle=longTitles)
+    return(df)
+}
+
+#' Get zip with course results by resource id and node id
+#'
+#' @param resource_id A length one character vector with resource id.
+#' @param node_id A length one character vector with node id (test).
+#' @param path A length one character vector with path, where the zip should be
+#'   stored. Default is working directory.
+#' @param rename A boolean value; optional; Set `TRUE` value to take the short
+#'   name of the course element for naming zip (results_shortName.zip). `FALSE`
+#'   combines in zip name course id and node id. Default is `TRUE`.
+#' @param api_user A character value of the username in the OPAL.
+#' @param api_password A character value of the password in the OPAL.
+#' @param endpoint A string of endpoint of LMS Opal; by default it is got from
+#'   environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'   variable, you need to call
+#'   `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')` or you can put these
+#'   command into .Renviron.
+#' @return It downloads a zip and return a character string with path.
+#' @examplesIf interactive()
+#' zip_file <- get_course_results("89068111333293", "1617337826161777006")
+#' @export
+get_course_results <- function(resource_id, node_id, path = ".",
+                               rename = TRUE,
+                               api_user = NULL, api_password = NULL,
+                               endpoint = NULL) {
+    if (is.null(endpoint)) endpoint <- catch_endpoint()
+    # check auth
+    if (!is_logged(endpoint) || !is.null(api_user) ||  !is.null(api_password)) {
+        user_id <- auth_opal(api_user, api_password)
+        if (is.null(user_id)) return(NULL)
+    }
+
+    url_res <- paste0(endpoint, "restapi/repo/courses/", resource_id,
+                      "/assessments/", node_id, "/results")
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN"=Sys.getenv("X-OLAT-TOKEN"))
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+    parse <- resp_body_xml(response)
+
+    ext <- tools::file_ext(path)
+
+    if (ext == "") {
+        dir <- path
+        if (rename) {
+            df <- get_course_elements(resource_id, api_user, api_password, endpoint)
+            short_name <- subset(df, df$nodeId == node_id)$shortName
+            short_name <- paste(strsplit(short_name, " ")[[1]], collapse = "_")
+            file_name <- paste0("results_", short_name, ".zip")
+        } else {
+            file_name <- paste0("results_", resource_id, "_", node_id, ".zip")
+        }
+    } else {
+        dir <- dirname(path)
+        file_name <- basename(path)
+    }
+    if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+
+    data_tag <- xml2::xml_find_first(parse, ".//data")
+    if (!is.na(data_tag)) {
+        zip_url <- xml2::xml_text(data_tag)
+        zip_path <- file.path(dir, file_name)
+        result <- download.file(zip_url, zip_path)
+        if (result == 0) message("See zip in ", zip_path)
+        return(normalizePath(zip_path, winslash = "/"))
+    } else {
+        message("There is no data about the results.")
+        return(NULL)
+    }
+}
+
 upload_resource <- function(file, display_name, rtype, access,
                             endpoint = NULL) {
     if (is.null(endpoint)) endpoint <- catch_endpoint()
@@ -327,6 +442,79 @@ update_resource <- function(file, id, rtype, endpoint = NULL) {
         stop(paste("Status Code:", response$status_code))
     }
     return(response)
+}
+
+#' Referenzierte Lernressource eines Kursbausteins austauschen
+#'
+#' @param course_id - Kursnummer. Sie finden diese in den Detailinformationen
+#'   des Kurses (Ressourcen-ID).
+#' @param node_id Kursbausteinnummer. Diese befindet sich beispielsweise im
+#'   Kurseditor im Tab "Titel und Beschreibung" des betreffenden Kursbausteins.
+#' @param resource_id ID der Ressource. Sie finden diese u.a. in der
+#'   Detailansicht der gewünschten Ressource
+#' @param api_user A character value of the username in the OPAL.
+#' @param api_password A character value of the password in the OPAL.
+#' @param endpoint A string of endpoint of LMS Opal; by default it is got from
+#'   environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'   variable, you need to call
+#'   `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')` or you can put these
+#'   command into .Renviron.
+#' @return Zu einem Kurs mit der übergebenen Kursnummer (courseId) wird am
+#'   Kursbaustein (nodeId) die hinterlegte LernressourceID ausgetauscht. Die, in
+#'   der Anfrage enthaltene Ressource (repoID), wird als neuer Inhalt am
+#'   Kursbaustein referenziert. Eine solche Aktualisierung ist nur für
+#'   Ressourcen vom Typ Test und Fragebogen verfügbar.
+#' @examplesIf interactive()
+#'    update_course_test("89068111333293", "1617337826161777006", "44829868033")
+#' @export
+update_course_test <- function(course_id, node_id, resource_id,
+                               api_user = NULL, api_password = NULL,
+                               endpoint = NULL) {
+    if (is.null(endpoint)) endpoint <- catch_endpoint()
+    # check auth
+    if (!is_logged(endpoint) || !is.null(api_user) ||  !is.null(api_password)) {
+        user_id <- auth_opal(api_user, api_password)
+        if (is.null(user_id)) return(NULL)
+    }
+
+    url_res <- paste0(endpoint, "restapi/repo/courses/", course_id,
+                      "/elements/", node_id,
+                      "/test/update?testResourceableId=", resource_id)
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN"=Sys.getenv("X-OLAT-TOKEN")) %>% req_method("PUT")
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+    print(response)
+
+}
+
+#' Publish a course on LMS Opal
+#'
+#' @param course_id - A string value of the number of course (Ressourcen-ID).
+#' @param api_user A character value of the username in the OPAL.
+#' @param api_password A character value of the password in the OPAL.
+#' @param endpoint A string of endpoint of LMS Opal; by default it is got from
+#'   environment variable `RQTI_API_ENDPOINT`. To set a global environment
+#'   variable, you need to call
+#'   `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')` or you can put these
+#'   command into .Renviron.
+#' @return Status code.
+#' @examplesIf interactive()
+#'    publish_course("89068111333293")
+#' @export
+publish_course <- function(course_id, api_user = NULL, api_password = NULL,
+                           endpoint = NULL) {
+    if (is.null(endpoint)) endpoint <- catch_endpoint()
+    # check auth
+    if (!is_logged(endpoint) || !is.null(api_user) ||  !is.null(api_password)) {
+        user_id <- auth_opal(api_user, api_password)
+        if (is.null(user_id)) return(NULL)
+    }
+
+    url_res <- paste0(endpoint, "restapi/repo/courses/", course_id, "/publish")
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN"=Sys.getenv("X-OLAT-TOKEN")) %>% req_method("POST")
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+    return(response$status_code)
 }
 
 # check if this is a test using the manifest file
