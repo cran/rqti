@@ -37,6 +37,19 @@ setMethod("initialize", "AssessmentItem", function(.Object, ...) {
     .Object
 })
 
+setValidity("AssessmentItem", function(object) {
+    errors <- list()
+    calc <- object@calculator
+    if (length(calc) == 1) {
+        if (!any(c("simple", "simple-calculator",
+              "scientific", "scientific-calculator") %in% calc) &&
+        !is.na(calc)) {
+        errors <- c(errors, "The '@calculator' slot must be one of the following: 'simple', 'scientific'.")
+        }
+    }
+    if (length(errors) == 0) TRUE else unlist(errors)
+})
+
 #' Create an element itemBody of a qti-xml document
 #'
 #' Generic function for creating itemBody element for XML document of
@@ -47,6 +60,7 @@ setMethod("initialize", "AssessmentItem", function(.Object, ...) {
 #'   [MultipleChoiceTable], [DirectedPair])
 #' @docType methods
 #' @rdname createItemBody-methods
+#' @export
 setGeneric("createItemBody", function(object) standardGeneric("createItemBody"))
 
 #' Create an element responseDeclaration of a qti-xml document
@@ -60,6 +74,7 @@ setGeneric("createItemBody", function(object) standardGeneric("createItemBody"))
 #'   [InlineChoice])
 #' @docType methods
 #' @rdname createResponseDeclaration-methods
+#' @export
 setGeneric("createResponseDeclaration",
            function(object) standardGeneric("createResponseDeclaration"))
 
@@ -74,6 +89,7 @@ setGeneric("createResponseDeclaration",
 #'   [InlineChoice])
 #' @docType methods
 #' @rdname createOutcomeDeclaration-methods
+#' @export
 setGeneric("createOutcomeDeclaration",
            function(object) standardGeneric("createOutcomeDeclaration"))
 
@@ -88,6 +104,7 @@ setGeneric("createOutcomeDeclaration",
 #'   [InlineChoice])
 #' @docType methods
 #' @rdname createResponseProcessing-methods
+#' @export
 setGeneric("createResponseProcessing",
            function(object) standardGeneric("createResponseProcessing"))
 
@@ -390,8 +407,8 @@ setMethod("prepareQTIJSFiles", signature(object = "AssessmentItem"),
           function(object, dir = "") {
               xml_path <- file.path(dir, "index.xml")
               suppressMessages(create_qti_task(object, xml_path,
-                                               verification = FALSE,
-                                               show_score = TRUE))
+                                               verification = FALSE))
+              return(NULL)
           })
 
 #' @rdname createMetadata-methods

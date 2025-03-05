@@ -89,7 +89,12 @@ setMethod("getIdentifier", signature(object = "character"),
 #' @aliases createQtiTest,character
 setMethod("createQtiTest", signature(object = "character"),
           function(object, dir = getwd()) {
+
               file <- object
+              if (length(file) > 1) {
+                  stop("Only one file can be provided as input.", call. = FALSE)
+              }
+
               if (!all(file.exists(file))) {
                   stop("The file does not exist", call. = FALSE)
               }
@@ -103,6 +108,30 @@ setMethod("createQtiTest", signature(object = "character"),
                                             identifier = "Preview")
                       file <- create_qti_test(test_obj, path = dir,
                                               zip_only = TRUE)
+                  }
+              }
+              return(file)
+          })
+
+#' @rdname createQtiTask-methods
+#' @aliases createQtiTask,character
+setMethod("createQtiTask", signature(object = "character"),
+          function(object, dir = getwd()) {
+
+              file <- object
+              if (length(file) > 1) {
+                  stop("Only one file can be provided as input.", call. = FALSE)
+              }
+
+              if (!all(file.exists(file))) {
+                  stop("The file does not exist", call. = FALSE)
+              }
+
+              ext <- file_ext(file)
+              if (ext != "zip") {
+                  if (ext %in% c("Rmd", "md")) {
+                      obj <- create_question_object(file)
+                      file <- createQtiTask(obj, dir = dir, zip = TRUE)
                   }
               }
               return(file)
@@ -147,11 +176,17 @@ setMethod("prepareQTIJSFiles", signature(object = "character"),
               ext <- file_ext(object)
               if (ext %in% c("Rmd", "md")) {
                   task <- create_question_object(object)
-                  create_qti_task(task, out_path, verification = FALSE,
-                                  show_score = TRUE)
+                  create_qti_task(task, out_path, verification = FALSE)
+                  current_rmd_fullpath <- normalizePath(object)
+                  xml_target <- sub("\\.Rmd$", ".xml", current_rmd_fullpath)
+                  file.copy(out_path, xml_target)
               }
               if (ext == "xml") file.copy(object, out_path)
               if (ext == "zip") zip::unzip(object, exdir = dir)
+              params <- knit_params(readLines(object))
+              if (!is.null(params$preview_feedback$value)) {
+                  return(params$preview_feedback$value)
+              }
               return(NULL)
           })
 

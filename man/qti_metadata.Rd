@@ -29,7 +29,7 @@ learning object.}
 Creates object of \link{QtiMetadata}-class
 }
 \examples{
-creator= qti_metadata(qti_contributor("Max Mustermann"),
+creator= qti_metadata(qtiContributor("Max Mustermann"),
                       description = "Task description",
                       rights = "This file is Copyright (C) 2024 Max
                       Mustermann, all rights reserved.",

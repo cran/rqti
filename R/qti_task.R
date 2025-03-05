@@ -41,7 +41,8 @@ create_value <- function(value) {
 create_item_body_entry <- function(object) {
     prompt <- NULL
     if (object@prompt != "") prompt <- tag("p", list(object@prompt))
-    tag("itemBody", list(prompt, Map(createText, object@content)))
+    tag_div <- tag("div", list(prompt, Map(createText, object@content)))
+    tag("itemBody", list(tag_div))
 }
 
 create_item_body_essay <- function(object) {
@@ -203,15 +204,12 @@ create_prompt <- function(object) {
 #'   default
 #' @param verification boolean, optional; to check validity of xml file, default
 #'   `FALSE`
-#' @param show_score boolean, optional; put div tag with score value. Default
-#' is `FALSE`.
 #' @return xml document.
 #' @name create_qti_task
 #' @rdname create_qti_task
 #' @aliases create_qti_task
 #' @importFrom textutils HTMLdecode
-create_qti_task <- function(object, dir = NULL, verification = FALSE,
-                            show_score = FALSE) {
+create_qti_task <- function(object, dir = NULL, verification = FALSE) {
     content <- as.character(create_assessment_item(object))
     # to handle reading of the xml with html entities
     # dtype <- "<!DOCTYPE assessmentItem PUBLIC \"-//W3C//DTD MathML 2.0//EN\" \"http://www.w3.org/Math/DTD/mathml3/mathml3.dtd\">"
@@ -237,24 +235,36 @@ create_qti_task <- function(object, dir = NULL, verification = FALSE,
         dir <- dirname(dir)
     }
     if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
-    # add tag div with printedVariable SCORE for QTIJS rendering
-    if (show_score) {
-        new_node <- xml2::read_xml('<div class="rqti-ai-result">Score:
-<printedVariable identifier="SCORE" format="%d" />(Max score:
-<printedVariable identifier="MAXSCORE" format="%d" />)</div>')
-        root_node <- xml2::xml_root(doc)
-        xml2::xml_add_child(root_node, new_node)
-    }
 
     path_task <- file.path(dir, paste0(file_name, ".xml"))
     xml2::write_xml(doc, path_task)
-    message("see assessment item: ", path_task)
+    if (interactive()) message("see assessment item: ", path_task)
     return(stringr::str_remove(path_task, getwd()))
 }
 
-# verifies xml according to xsd scheme
-verify_qti <- function(doc) {
-    file <- file.path(system.file(package = "rqti"), "imsqti_v2p1p2.xsd")
+#' Verify QTI XML against XSD Schema QTI v2.1
+#'
+#' This function validates a QTI XML document against the IMS QTI v2.1.2 XSD
+#' schema.
+#'
+#' @param doc A character string representing the path to the XML file or an
+#'   `xml2` document object.
+#' @param extended_scheme A boolean value that controls the version of the XSD
+#'   schema used for validation. If `TRUE`, the extended version is used,
+#'   allowing additional tags in the XML (e.g., `details`). Default is `FALSE`.
+#' @return A logical value indicating whether the XML document is valid
+#'   according to the schema. If invalid, returns an object detailing the
+#'   validation errors.
+#' @examples
+#' \dontrun{
+#' # Validate an XML file
+#' result <- verify_qti("path/to/your/qti.xml")
+#' }
+#' @export
+verify_qti <- function(doc, extended_scheme = FALSE) {
+    if (is.character(doc)) doc <- xml2::read_xml(doc)
+    schema_name <- ifelse(extended_scheme, "qti_v2p1p2_extension.xsd", "imsqti_v2p1p2.xsd")
+    file <- file.path(system.file(package = "rqti"), schema_name)
     schema <- xml2::read_xml(file)
     validation <- xml2::xml_validate(doc, schema)
     ifelse(validation[1], return(validation[1]), return(validation))

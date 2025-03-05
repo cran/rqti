@@ -16,7 +16,7 @@ check_contributor <- function(object) {
 #' Class QtiContributor
 #'
 #' This class stores metadata information about contributors.
-#' @slot contributor A character string representing the name of the author.
+#' @slot name A character string representing the name of the author.
 #' By default it takes value from environment variable 'RQTI_AUTHOR'.
 #' @slot role A character string kind of contribution. Possible values: author,
 #'   publisher, unknown, initiator, terminator, validator, editor, graphical
@@ -29,17 +29,17 @@ check_contributor <- function(object) {
 #' @rdname QtiContributor-class
 #' @aliases QtiContributor
 #' @include rqti.R
-setClass("QtiContributor", slots = c(contributor = "character",
+setClass("QtiContributor", slots = c(name = "character",
                                      role = "character",
                                      contribution_date = "Date"),
-         prototype = prototype(contributor = Sys.getenv("RQTI_AUTHOR"),
+         prototype = prototype(name = Sys.getenv("RQTI_AUTHOR"),
                                role = "author",
                                contribution_date = Date(0)),
          validity = check_contributor)
 
 setMethod("initialize", "QtiContributor", function(.Object, ...) {
     .Object <- callNextMethod()
-    if (.Object@contributor != "" && length(.Object@contribution_date) == 0) {
+    if (.Object@name != "" && length(.Object@contribution_date) == 0) {
         .Object@contribution_date <- Sys.Date()
     }
     validObject(.Object)
@@ -50,7 +50,7 @@ setMethod("initialize", "QtiContributor", function(.Object, ...) {
 #' Constructor function for class QtiContributor
 #'
 #' Creates object of [QtiContributor]-class
-#' @param contributor A character string representing the name of the author.
+#' @param name A character string representing the name of the author.
 #' @param role A character string kind of contribution. Possible values: author,
 #'   publisher, unknown, initiator, terminator, validator, editor, graphical
 #'   designer, technical implementer, content provider, technical validator,
@@ -61,10 +61,33 @@ setMethod("initialize", "QtiContributor", function(.Object, ...) {
 #'   assigned.
 #' @examples
 #' creator= qti_contributor("Max Mustermann", "technical validator")
+#' @importFrom lifecycle deprecate_warn
 #' @export
-qti_contributor <- function(contributor = Sys.getenv("RQTI_AUTHOR"),
+qti_contributor <- function(name = Sys.getenv("RQTI_AUTHOR"),
                             role = "author",
-                            contribution_date = ifelse(contributor != "", Sys.Date(), NA_Date_)) {
+                            contribution_date = ifelse(name != "", Sys.Date(), NA_Date_)) {
+    deprecate_warn("0.3.1", "qti_contributor()", "qtiContributor()")
+    qtiContributor(name, role, contribution_date)
+}
+
+#' Constructor function for class QtiContributor
+#'
+#' Creates object of [QtiContributor]-class
+#' @param name A character string representing the name of the author.
+#' @param role A character string kind of contribution. Possible values: author,
+#'   publisher, unknown, initiator, terminator, validator, editor, graphical
+#'   designer, technical implementer, content provider, technical validator,
+#'   educational validator, script writer, instructional designer, subject
+#'   matter expert. Default is "author".
+#' @param contribution_date A character string representing date of the
+#'   contribution. Default is the current system date, when contributor is
+#'   assigned.
+#' @examples
+#' creator= qtiContributor("Max Mustermann", "technical validator")
+#' @export
+qtiContributor <- function(name = Sys.getenv("RQTI_AUTHOR"),
+                            role = "author",
+                            contribution_date = ifelse(name != "", Sys.Date(), NA_Date_)) {
     params <- as.list(environment())
     params$Class <- "QtiContributor"
     if (is.na(params$contribution_date)) params$contribution_date <- Date(0)
@@ -102,7 +125,7 @@ setClass("QtiMetadata", slots = c(contributor = "list",
                                   description = "character",
                                   rights = "character",
                                   version = "character"),
-         prototype = prototype(contributor = list(qti_contributor()),
+         prototype = prototype(contributor = list(qtiContributor()),
                                rights = Sys.getenv("RQTI_RIGHTS"),
                                description = ""),
          validity = check_metadata)
@@ -129,13 +152,40 @@ setMethod("initialize", "QtiMetadata", function(.Object, ...) {
 #' @param version A character string representing the edition/version of this
 #'   learning object.
 #' @examples
-#' creator= qti_metadata(qti_contributor("Max Mustermann"),
+#' creator= qti_metadata(qtiContributor("Max Mustermann"),
 #'                       description = "Task description",
 #'                       rights = "This file is Copyright (C) 2024 Max
 #'                       Mustermann, all rights reserved.",
 #'                       version = "1.0")
 #' @export
 qti_metadata<- function(contributor = list(), description = "",
+                        rights = Sys.getenv("RQTI_RIGHTS"),
+                        version = NA_character_) {
+    deprecate_warn("0.3.1", "qti_metadata()", "qtiMetadata()")
+    obj <- qtiMetadata(contributor, description, rights, version)
+    return(obj)
+}
+
+#' Constructor function for class QtiMetadata
+#'
+#' Creates object of [QtiMetadata]-class
+#' @param contributor A list of objects [QtiContributor]-type that holds
+#'   metadata information about the authors.
+#' @param description A character string providing a textual description of the
+#'   content of this learning object.
+#' @param rights A character string describing the intellectual property rights
+#'   and conditions of use for this learning object. By default it takes value
+#'   from environment variable 'RQTI_RIGHTS'.
+#' @param version A character string representing the edition/version of this
+#'   learning object.
+#' @examples
+#' creator= qtiMetadata(qtiContributor("Max Mustermann"),
+#'                       description = "Task description",
+#'                       rights = "This file is Copyright (C) 2024 Max
+#'                       Mustermann, all rights reserved.",
+#'                       version = "1.0")
+#' @export
+qtiMetadata<- function(contributor = list(), description = "",
                         rights = Sys.getenv("RQTI_RIGHTS"),
                         version = NA_character_) {
     if (!is(contributor, "list")) contributor <- list(contributor)
@@ -161,7 +211,7 @@ setMethod("createMetadata", signature(object = "QtiContributor"),
               role_src <- tag("source", list("LOMv1.0"))
               role_value <- tag("value", list(object@role))
               role <- tag("role", list(role_src, role_value))
-              vcard <- paste0("BEGIN:VCARD\r\nFN:", object@contributor,
+              vcard <- paste0("BEGIN:VCARD\r\nFN:", object@name,
                               "\r\nEND:VCARD\r\n")
               ent <- tag("entity", list(vcard))
               dt <- tag("date",

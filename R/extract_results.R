@@ -4,7 +4,7 @@
 #' xml file and creates two kinds of data frames (according to parameter
 #' 'level'), see the 'Details' section.
 #' @param file A string with a path of the xml test result file.
-#' @param level A string with two possible values: exercises and items.
+#' @param level A string with two possible values: task and item.
 #' @param hide_filename A boolean value, TRUE to hide original file names by
 #'   default.
 #' @import xml2
@@ -12,7 +12,7 @@
 #' @importFrom zip zip_list
 #' @return A dataframe with attribues of the candidates outcomes and result
 #'   variables.
-#' @note 1.With option level = "exercises" data frame consists of columns:
+#' @note 1.With option level = "task" data frame consists of columns:
 #'  * 'file' - name of the xml file with test results (to identify
 #'   candidate)
 #'  * 'date' - date and time of test
@@ -20,12 +20,11 @@
 #'  * 'duration' - time in sec. what candidate spent on this item
 #'  * 'score_candidate' - points that were given to candidate after evaluation
 #'  * 'score_max' - max possible score for this question
-#'  * 'question_type' - the type of question
 #'  * 'is_answer_given' - TRUE if candidate gave the answer on question,
 #'   otherwise FALSE
 #'  * 'title' - the values of attribute 'title' of assessment items
 #'
-#'   2.With option level = "items" data frame consists of columns:
+#'   2.With option level = "item" data frame consists of columns:
 #' * 'file' - name of the xml file with test results (to identify
 #'   candidate)
 #' * 'date' - date and time of test
@@ -45,11 +44,11 @@
 #' * 'title' - the values of attribute 'title' of assessment items
 #' @examples
 #' file <- system.file("test_results.zip", package='rqti')
-#' df <- extract_results(file, level = "items")
+#' df <- extract_results(file, level = "item")
 #'
 #' @import digest
 #' @export
-extract_results <- function(file, level = "exercises", hide_filename = TRUE) {
+extract_results <- function(file, level = "task", hide_filename = TRUE) {
     if (!all(file.exists(file))) stop("One or more files in list do not exist",
                                       call. = FALSE)
 
@@ -88,7 +87,7 @@ build_dataset <- function(tdir, level, names = NULL, hide_filename) {
     if (length(ai_files) > 0) db <- get_titles(ai_files, tdir)
 
     else {
-        warning("In given archive files with exercises are not found.\n",
+        warning("No task files found in archive.\n",
                 "The \'title\' column will be skipped in the final dataframe",
                 immediate. = TRUE, call. = FALSE)
         db <- NULL
@@ -97,10 +96,10 @@ build_dataset <- function(tdir, level, names = NULL, hide_filename) {
     for (f in res_files) {
         xml_path <- file.path(tdir, f)
         switch(level,
-            exercises = {
+            task = {
                 df0 <- get_result_attr_answers(xml_path, hide_filename)
             },
-            items = {
+            item = {
                 df0 <- get_result_attr_options(xml_path, hide_filename)
             }
         )
@@ -175,7 +174,6 @@ get_result_attr_answers<- function(file, hide_filename) {
     durations <- Map(get_duration, items_result)
     scores <- Map(get_score, items_result, "SCORE")
     maxes <- Map(get_score, items_result, "MAXSCORE")
-    types <- unlist(lapply(ids_item, identify_question_type))
 
     data <- data.frame(file = rep(file_name, length(ids_item)),
                        date = rep(test_dt, length(ids_item)),
@@ -183,7 +181,6 @@ get_result_attr_answers<- function(file, hide_filename) {
                        duration = as.numeric(durations),
                        score_candidate = as.numeric(scores),
                        score_max = as.numeric(maxes),
-                       question_type = types,
                        is_answer_given = igiven)
     return(data)
 }
@@ -263,8 +260,6 @@ get_result_attr_options <- function(file, hide_filename) {
     items_result <- unique_result_set(doc)
 
     ids_item <- xml2::xml_attr(items_result, attr = "identifier")
-
-    types <- unlist(lapply(ids_item, identify_question_type))
 
     identifier <-  character(0)
     options <- character(0)
@@ -492,16 +487,6 @@ get_value <- function(node) {
     values <- xml2::xml_find_all(node, ".//d1:value")
     value  <- xml2::xml_text(values)
     return(value)
-}
-
-# to detect question type
-identify_question_type <- function(q_id) {
-    types <- c("schoice", "mchoice", "num", "cloze", "essay")
-    result <- "unknown"
-    for (t in types) {
-        if (grepl(t, q_id)) result <- t
-    }
-    return(result)
 }
 
 # returns TRUE if candidate gave an answer

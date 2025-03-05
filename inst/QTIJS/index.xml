@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE assessmentItem>
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="wissenschaftstheorie" title="wissenschaftstheorie" adaptive="false" timeDependent="false">
-  <responseDeclaration identifier="RESPONSE" cardinality="multiple" baseType="directedPair">
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="id_task_1777" title="id_task_1777" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="RESPONSE" cardinality="ordered" baseType="identifier">
     <correctResponse>
-      <value>lakatos MtwF</value>
-      <value>logik_induktion LgsE</value>
-      <value>carnap LgsE</value>
-      <value>konsens NurF</value>
-      <value>induktion LgsE</value>
+      <value>ChoiceA</value>
+      <value>ChoiceB</value>
     </correctResponse>
-    <mapping defaultValue="0">
-      <mapEntry mapKey="lakatos MtwF" mappedValue="0.5"/>
-      <mapEntry mapKey="logik_induktion LgsE" mappedValue="0.5"/>
-      <mapEntry mapKey="carnap LgsE" mappedValue="0.5"/>
-      <mapEntry mapKey="konsens NurF" mappedValue="0.5"/>
-      <mapEntry mapKey="induktion LgsE" mappedValue="0.5"/>
-    </mapping>
   </responseDeclaration>
   <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
     <defaultValue>
@@ -24,7 +14,7 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
     <defaultValue>
-      <value>2.5</value>
+      <value>1</value>
     </defaultValue>
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
@@ -39,38 +29,12 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="FEEDBACKMODAL" cardinality="multiple" baseType="identifier"/>
   <itemBody>
-    <matchInteraction responseIdentifier="RESPONSE" shuffle="true" maxAssociations="5">
-      <simpleMatchSet>
-        <simpleAssociableChoice identifier="lakatos" fixed="false" matchMax="1">Lakatos</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="logik_induktion" fixed="false" matchMax="1">$$(B_1 \land B_2 \land \ldots \land B_n) \to H $$</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="carnap" fixed="false" matchMax="1">Carnap</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="konsens" fixed="false" matchMax="1">sehr hohes Ausmaß an Konsens zwischen Wissenschaftlern</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="induktion" fixed="false" matchMax="1">Erkenntisgewinn primär durch Induktion</simpleAssociableChoice>
-      </simpleMatchSet>
-      <simpleMatchSet>
-        <simpleAssociableChoice identifier="LgsE" fixed="false" matchMax="5">Kritischer Rationalismus</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="MtwF" fixed="false" matchMax="5">Logischer Empirismus</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="NurF" fixed="false" matchMax="5">Methodologie wissenschaftlicher Forschungsprogramme</simpleAssociableChoice>
-        <simpleAssociableChoice identifier="LgsE" fixed="false" matchMax="5">Normalwissenschaftliche und revolutionäre Forschungsperioden</simpleAssociableChoice>
-      </simpleMatchSet>
-    </matchInteraction>
+    <orderInteraction responseIdentifier="RESPONSE" shuffle="true">
+      <simpleChoice identifier="ChoiceA">a</simpleChoice>
+      <simpleChoice identifier="ChoiceB">b</simpleChoice>
+    </orderInteraction>
   </itemBody>
   <responseProcessing>
-    <responseCondition>
-      <responseIf>
-        <not>
-          <isNull>
-            <variable identifier="RESPONSE"/>
-          </isNull>
-        </not>
-        <setOutcomeValue identifier="SCORE">
-          <sum>
-            <variable identifier="SCORE"/>
-            <mapResponse identifier="RESPONSE"/>
-          </sum>
-        </setOutcomeValue>
-      </responseIf>
-    </responseCondition>
     <responseCondition>
       <responseIf>
         <gt>
@@ -133,9 +97,78 @@
         </setOutcomeValue>
       </responseIf>
     </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <and>
+          <match>
+            <baseValue baseType="identifier">incorrect</baseValue>
+            <variable identifier="FEEDBACKBASIC"/>
+          </match>
+        </and>
+        <setOutcomeValue identifier="FEEDBACKMODAL">
+          <multiple>
+            <variable identifier="FEEDBACKMODAL"/>
+            <baseValue baseType="identifier">incorrect</baseValue>
+          </multiple>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <and>
+          <match>
+            <baseValue baseType="identifier">correct</baseValue>
+            <variable identifier="FEEDBACKBASIC"/>
+          </match>
+        </and>
+        <setOutcomeValue identifier="FEEDBACKMODAL">
+          <multiple>
+            <variable identifier="FEEDBACKMODAL"/>
+            <baseValue baseType="identifier">correct</baseValue>
+          </multiple>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <match>
+          <index n="1">
+            <variable identifier="RESPONSE"/>
+          </index>
+          <index n="1">
+            <correct identifier="RESPONSE"/>
+          </index>
+        </match>
+        <setOutcomeValue identifier="SCORE">
+          <sum>
+            <variable identifier="SCORE"/>
+            <baseValue baseType="float">0.5</baseValue>
+          </sum>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <match>
+          <index n="2">
+            <variable identifier="RESPONSE"/>
+          </index>
+          <index n="2">
+            <correct identifier="RESPONSE"/>
+          </index>
+        </match>
+        <setOutcomeValue identifier="SCORE">
+          <sum>
+            <variable identifier="SCORE"/>
+            <baseValue baseType="float">0.5</baseValue>
+          </sum>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
   </responseProcessing>
-  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show"/>
+  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show">model answer</modalFeedback>
+  <modalFeedback identifier="incorrect" outcomeIdentifier="FEEDBACKMODAL" showHide="show">wrong answer</modalFeedback>
+  <modalFeedback identifier="correct" outcomeIdentifier="FEEDBACKMODAL" showHide="show">correct answer</modalFeedback>
   <div class="rqti-ai-result">Score:
-<printedVariable identifier="SCORE" format="%d"/>(Max score:
-<printedVariable identifier="MAXSCORE" format="%d"/>)</div>
+<printedVariable identifier="SCORE" format="%d"/></div>
 </assessmentItem>

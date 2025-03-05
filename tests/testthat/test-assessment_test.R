@@ -36,6 +36,7 @@ test_that("Testing method createOutcomeDeclaration()
     )
     exam <- new("AssessmentTest",
                 identifier = "id_test",
+                academic_grading = NA_real_,
                 # exclude "title"
                 section = list(exam_section)
                 )
@@ -102,7 +103,6 @@ test_that("Testing method createOutcomeDeclaration() with
                )
                exam <- new("AssessmentTest",
                            identifier = "id_test",
-                           academic_grading = TRUE,
                            section = list(exam_section)
                )
 
@@ -146,7 +146,7 @@ test_that("Testing method createOutcomeDeclaration() with
 					<and>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">2.99</baseValue>
+							<baseValue baseType=\"float\">3.00</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -166,7 +166,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">3.29</baseValue>
+							<baseValue baseType=\"float\">3.30</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -186,7 +186,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">3.59</baseValue>
+							<baseValue baseType=\"float\">3.60</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -206,7 +206,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">3.89</baseValue>
+							<baseValue baseType=\"float\">3.90</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -226,7 +226,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">4.19</baseValue>
+							<baseValue baseType=\"float\">4.20</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -246,7 +246,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">4.49</baseValue>
+							<baseValue baseType=\"float\">4.50</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -266,7 +266,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">4.79</baseValue>
+							<baseValue baseType=\"float\">4.80</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -286,7 +286,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">5.09</baseValue>
+							<baseValue baseType=\"float\">5.10</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -306,7 +306,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">5.39</baseValue>
+							<baseValue baseType=\"float\">5.40</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -326,7 +326,7 @@ test_that("Testing method createOutcomeDeclaration() with
 						</gte>
 						<lt>
 							<variable identifier=\"SCORE\"/>
-							<baseValue baseType=\"float\">5.69</baseValue>
+							<baseValue baseType=\"float\">5.70</baseValue>
 						</lt>
 					</and>
 					<setOutcomeValue identifier=\"FEEDBACKMODAL\">
@@ -673,3 +673,79 @@ test_that("Testing a specific attribute 'files' in yaml section of Rmd file",
     expect_equal(exam@files, expected)
 })
 
+test_that("Test assessmentSection function that return an object
+          of class AssessmentSection", {
+
+              sc <- singleChoice(prompt = "Question",
+                                       choices = c("A", "B", "C"))
+              es <- new("Essay", prompt = "Question")
+              s <- section(c(sc, es), title = "Section with nonrandomized tasks")
+
+              sut <- assessmentSection(list(s), title = "Example of the Exam")
+
+              expected <- new("AssessmentSection",
+                              title = "Example of the Exam",
+                              assessment_item = list(s))
+
+              expected@identifier <- sut@identifier
+
+              # Check if the object is of class AssessmentSection
+              expect_true(inherits(sut, "AssessmentSection"))
+
+              # Check if the object is of class AssessmentSection
+              expect_equal(expected, sut)
+})
+
+test_that("Test assessmentTest function that return an object
+          of class AssessmentTest", {
+
+              sc <- singleChoice(prompt = "Question", choices = c("A", "B", "C"))
+              es <- new("Essay", prompt = "Question")
+              s <- section(c(sc, es), title = "Section with nonrandomized tasks")
+
+              sut <- assessmentTest(list(s), title = "Example of the Exam")
+
+              expected <- new("AssessmentTest",
+                              title = "Example of the Exam",
+                              section = list(s),
+                              time_limit = 90,
+                              max_attempts = 1)
+
+              expected@identifier <- sut@identifier
+              expected@rebuild_variables <- sut@rebuild_variables
+              expected@metadata <- sut@metadata
+
+
+              # Check if the object is of class AssessmentTest
+              expect_true(inherits(sut, "AssessmentTest"))
+
+              # Check if the object is of class AssessmentTest
+              expect_equal(expected, sut)
+})
+
+test_that("Test assessmentTestOpal function that return an object
+          of class AssessmentTest", {
+
+              sc <- singleChoice(prompt = "Question", choices = c("A", "B", "C"))
+              es <- new("Essay", prompt = "Question")
+              s <- section(c(sc, es), title = "Section with nonrandomized tasks")
+
+              sut <- assessmentTestOpal(list(s), title = "Example of the Exam" )
+
+              expected <- new("AssessmentTestOpal",
+                              title = "Example of the Exam",
+                              section = list(s),
+                              time_limit = 90,
+                              max_attempts = 1)
+
+              expected@identifier <- sut@identifier
+              expected@metadata <- sut@metadata
+              expected@rebuild_variables <- sut@rebuild_variables
+
+
+              # Check if the object is of class AssessmentTestOpal
+              expect_true(inherits(sut, "AssessmentTest"))
+
+              # Check if the object is of class AssessmentTestOpal
+              expect_equal(expected, sut)
+})

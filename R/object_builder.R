@@ -49,20 +49,33 @@ rmd2xml <- function(file, path = getwd(), verification = FALSE) {
 }
 
 
+#' Create rqti S4 [AssessmentItem] Object from Rmd
+#'
+#' Generates an rqti S4 AssessmentItem object ([SingleChoice], [MultipleChoice],
+#' [Essay], [Entry], [Ordering], [OneInRowTable], [OneInColTable],
+#' [MultipleChoiceTable], [DirectedPair]) from an Rmd file.
+#'
+#' @param file A string representing the path to an Rmd file.
+#' @return One of the rqti S4 AssessmentItem objects: [SingleChoice],
+#' [MultipleChoice], [Essay], [Entry], [Ordering], [OneInRowTable],
+#' [OneInColTable], [MultipleChoiceTable], or [DirectedPair].
+#' @examplesIf interactive()
+#' create_question_object("file.Rmd")
 #' @importFrom stringr str_split_1
 #' @importFrom rmarkdown pandoc_convert yaml_front_matter
 #' @importFrom knitr knit opts_knit
-create_question_object <- function(file, file_dir = NULL) {
+#' @export
+create_question_object <- function(file) {
     rmd_checker(file)
     attrs <- yaml_front_matter(file)
     # form value for slot metadata
     mtdata <- attrs$metadata
-    contrs <- lapply(mtdata$contributor, function(x) {do.call(qti_contributor, x)})
-    if (length(contrs) == 0) contrs <- qti_contributor()
+    contrs <- lapply(mtdata$contributor, function(x) {do.call(qtiContributor, x)})
+    if (length(contrs) == 0) contrs <- qtiContributor()
     mtdata$contributor <- contrs
-    mtdata <- do.call(qti_metadata, mtdata)
+    mtdata <- do.call(qtiMetadata, mtdata)
     # ignore parameters that are not related to object creation
-    attrs <- attrs[! names(attrs) %in% c("knit", "metadata")]
+    attrs <- attrs[! names(attrs) %in% c("knit", "metadata", "params")]
 
     tdir <- tempdir()
 
@@ -123,7 +136,7 @@ create_question_object <- function(file, file_dir = NULL) {
         slots$identifier <- id
     }
 
-    feedback <- list(parse_feedback(doc, file_dir))
+    feedback <- list(parse_feedback(doc))
     slots <- c(slots, feedback = feedback, metadata = mtdata)
     if (is.null(slots$content)) {
         slots$content <- as.list(paste(clean_question(html_qstn), collapse = ""))

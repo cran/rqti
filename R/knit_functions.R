@@ -27,6 +27,7 @@
 #' file <- system.file("exercises/sc1.Rmd", package='rqti')
 #' render_qtijs(file)
 #'
+#' @importFrom knitr knit_params
 #' @export
 render_qtijs <- function(input, preview_feedback = FALSE, ...) {
     clean_qtijs()
@@ -41,9 +42,11 @@ render_qtijs <- function(input, preview_feedback = FALSE, ...) {
             url <- prepare_renderer()
         }
     }
+    preparation <- prepareQTIJSFiles(input, qtijs_path())
+    if (!is.null(preparation)) preview_feedback <- preparation
     url <- paste0(url, "?mfb=", as.numeric(preview_feedback))
     message("Open browser at: ", url, " for preview")
-    prepareQTIJSFiles(input, qtijs_path())
+
     if (Sys.getenv("RSTUDIO") == "1") {
         rstudioapi::viewer(url)
     }
@@ -158,7 +161,8 @@ stop_server <- function() {
 #' @export
 render_opal <- function(input, ...) {
     knit_test <- rmd2zip(input)
-    result <- upload2opal(knit_test)
+    con <- new("Opal")
+    result <- upload2LMS(con, knit_test)
     unlink(knit_test)
     return(result)
 }

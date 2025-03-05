@@ -46,7 +46,7 @@ rqti_project <- function(path, ...) {
         "",
         "# Step 1: Prepare Rmd files with individual exercises.",
         "# To create an Rmd file, select RStudio templates starting with rqti ",
-        "# File -> New File -> R Markdown -> From Template -> rqti: ...",
+        "# File -> New File -> R Markdown -> From Template ->  ... {rqti}",
         "# Alternatively, modify the templates copied to your working directory",
         "# when the project was created. They can be found in the Files tab",
         "# in the bottom right region in RStudio, such as gap or dropdown."
@@ -65,7 +65,6 @@ rqti_project <- function(path, ...) {
         "test_opal <- test4opal(sections, \"test_demo_opal\", time_limit = 90,",
         "                       max_attempts = 1, files = \"attachment.pdf\",",
         "                       calculator = \"scientific-calculator\",",
-        "                       academic_grading = TRUE,",
         "                       grade_label = \"Note\")\n",
         "# Step 4. Render Test using QTIJS server.",
         "# Render test_opal using QTIJS server",

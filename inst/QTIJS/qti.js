@@ -3951,6 +3951,7 @@ function updatePrintedVariables(item) {
       let decl = item.declarations[variable];
       if (decl) {
         let value = coerce(decl, decl.value, getDefaultValue(decl));
+        value = roundIfMoreThanThreeDecimals(value);
         if (decl.cardinality==="multiple")
           value = value.join(pv.getAttribute(DELIMITER));
         let prefix = pv.getAttribute(PREFIX_ATTRIB)||"";
@@ -3962,6 +3963,16 @@ function updatePrintedVariables(item) {
       }
     });
   }
+}
+
+// it rounds float variable, when it has more than three decimals
+function roundIfMoreThanThreeDecimals(vrb) {
+    let vrbStr = vrb.toString();
+    let parts = vrbStr.split('.');
+    if (parts.length >1 && parts[1].length > 3) {
+        vrb = vrb.toFixed(3);
+    }
+    return vrb;
 }
 
 // Updates MathML elements with latest variable values.
@@ -5682,9 +5693,30 @@ window.addEventListener("load",function() {
 
     if (QTI.ROOT.tagName=="assessmentItem") {
       // The root XML document is a standalone assessmentItem.
+      // Create and add to the ROOT tag with printedVarible to show SCORE and MAXSCORE
+      const newDiv = document.createElement('div');
+      newDiv.className = "rqti-ai-result";
+      const textBefore = document.createTextNode('Score: ');
+      const scoreVar = document.createElementNS("", "printedVariable");
+      scoreVar.setAttribute('identifier', 'SCORE');
+      scoreVar.setAttribute('format', '%d');
+      const textBetween = document.createTextNode(' (Max score: ');
+      const maxScoreVar = document.createElementNS("", "printedVariable");
+      maxScoreVar.setAttribute('identifier', 'MAXSCORE');
+      maxScoreVar.setAttribute('format', '%d');
+      const textAfter = document.createTextNode(')');
+      // Append everything in the correct order
+      newDiv.appendChild(textBefore);
+      newDiv.appendChild(scoreVar);
+      newDiv.appendChild(textBetween);
+      newDiv.appendChild(maxScoreVar);
+      newDiv.appendChild(textAfter);
+      QTI.ROOT.appendChild(newDiv);
+
       append(doTransforms(QTI.ROOT));
       setupAssessmentItem(QTI.ROOT);
       setTimeout(start, START_DELAY_ITEM);
+
     } else {
 
       if (QTI.ROOT.tagName=="assessmentSection") {
