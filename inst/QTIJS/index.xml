@@ -1,11 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE assessmentItem>
-<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="id_task_1777" title="id_task_1777" adaptive="false" timeDependent="false">
-  <responseDeclaration identifier="RESPONSE" cardinality="ordered" baseType="identifier">
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="ANOVA_dd_2" title="ANOVA_dd_2" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="dd_interaktion" cardinality="single" baseType="identifier">
     <correctResponse>
-      <value>ChoiceA</value>
-      <value>ChoiceB</value>
+      <value>kein Interaktionseffekt vorliegt.</value>
     </correctResponse>
+    <mapping>
+      <mapEntry mapKey="kein Interaktionseffekt vorliegt." mappedValue="0.5"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="dd_design" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>3x3-Design.</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="3x3-Design." mappedValue="0.5"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="dd_voraussetzung" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>Varianzgleichheit zwischen den experimentellen Bedingungen hinsichtlich der abhängigen Variable.</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="Varianzgleichheit zwischen den experimentellen Bedingungen hinsichtlich der abhängigen Variable." mappedValue="0.5"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="dd_n" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>n = 10.</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="n = 10." mappedValue="0.5"/>
+    </mapping>
   </responseDeclaration>
   <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
     <defaultValue>
@@ -14,10 +40,70 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
     <defaultValue>
-      <value>1</value>
+      <value>2</value>
     </defaultValue>
   </outcomeDeclaration>
   <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_dd_interaktion" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_dd_interaktion" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0.5</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_dd_interaktion" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_dd_design" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_dd_design" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0.5</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_dd_design" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_dd_voraussetzung" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_dd_voraussetzung" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0.5</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_dd_voraussetzung" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_dd_n" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_dd_n" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0.5</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_dd_n" cardinality="single" baseType="float">
     <defaultValue>
       <value>0</value>
     </defaultValue>
@@ -29,12 +115,83 @@
   </outcomeDeclaration>
   <outcomeDeclaration identifier="FEEDBACKMODAL" cardinality="multiple" baseType="identifier"/>
   <itemBody>
-    <orderInteraction responseIdentifier="RESPONSE" shuffle="true">
-      <simpleChoice identifier="ChoiceA">a</simpleChoice>
-      <simpleChoice identifier="ChoiceB">b</simpleChoice>
-    </orderInteraction>
+    <div>
+      <p>Gegeben ist eine Grafik von Mittelwerten aus einem mehrfaktoriellen Design. Diese Grafik könnte genutzt werden, um anschließend eine ANOVA zu berechnen.</p>
+      <p>
+        <img src="data:image/png;base64,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"/>
+      </p>
+      <p>In der Grafik erkennen Sie, dass 
+      <inlineChoiceInteraction responseIdentifier="dd_interaktion" shuffle="true"><inlineChoice identifier="kein Interaktionseffekt vorliegt.">kein Interaktionseffekt vorliegt.</inlineChoice><inlineChoice identifier="wahrscheinlich ein partieller Interaktionseffekt vorliegt.">wahrscheinlich ein partieller Interaktionseffekt vorliegt.</inlineChoice><inlineChoice identifier="eine dreifache Interaktion vorliegt.">eine dreifache Interaktion vorliegt.</inlineChoice><inlineChoice identifier="eine vollständige Interaktion vorliegt.">eine vollständige Interaktion vorliegt.</inlineChoice></inlineChoiceInteraction>
+      </p>
+      <p>Das grundlegende Design ist ein 
+      <inlineChoiceInteraction responseIdentifier="dd_design" shuffle="true"><inlineChoice identifier="3x3-Design.">3x3-Design.</inlineChoice><inlineChoice identifier="2x3-Design.">2x3-Design.</inlineChoice><inlineChoice identifier="2x2x2-Design.">2x2x2-Design.</inlineChoice><inlineChoice identifier="3x3x3-Design.">3x3x3-Design.</inlineChoice><inlineChoice identifier="3x2-Design.">3x2-Design.</inlineChoice></inlineChoiceInteraction>
+      </p>
+      <p>Welche der folgenden Voraussetzungen müssen vor der Berechnung einer ANOVA geprüft werden? 
+      <inlineChoiceInteraction responseIdentifier="dd_voraussetzung" shuffle="true"><inlineChoice identifier="Varianzgleichheit zwischen den experimentellen Bedingungen hinsichtlich der abhängigen Variable.">Varianzgleichheit zwischen den experimentellen Bedingungen hinsichtlich der abhängigen Variable.</inlineChoice><inlineChoice identifier="Normalverteilung von Faktor A und Faktor B.">Normalverteilung von Faktor A und Faktor B.</inlineChoice><inlineChoice identifier="Linearität zwischen Faktor A und der abhängigen Variable.">Linearität zwischen Faktor A und der abhängigen Variable.</inlineChoice><inlineChoice identifier="Varianzgleichheit zwischen Faktor A und Faktor B.">Varianzgleichheit zwischen Faktor A und Faktor B.</inlineChoice><inlineChoice identifier="Abhängigkeit der Beobachtungen von Kovariaten.">Abhängigkeit der Beobachtungen von Kovariaten.</inlineChoice><inlineChoice identifier="Normalverteilung der Residuen innerhalb der Zellen.">Normalverteilung der Residuen innerhalb der Zellen.</inlineChoice></inlineChoiceInteraction>
+      </p>
+      <p>Für den Haupteffekt des Faktors A ergibt sich ein <span class="math inline">\(F(2, 27) = 4,11, p = .027.\)</span></p>
+      <p>Wie groß war die Stichprobengröße pro Zelle? 
+      <inlineChoiceInteraction responseIdentifier="dd_n" shuffle="true"><inlineChoice identifier="n = 10.">n = 10.</inlineChoice><inlineChoice identifier="n = 9.">n = 9.</inlineChoice><inlineChoice identifier="n = 90.">n = 90.</inlineChoice><inlineChoice identifier="n = 3.">n = 3.</inlineChoice></inlineChoiceInteraction>
+      </p>
+    </div>
   </itemBody>
   <responseProcessing>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="dd_interaktion"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_dd_interaktion">
+          <mapResponse identifier="dd_interaktion"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="dd_design"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_dd_design">
+          <mapResponse identifier="dd_design"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="dd_voraussetzung"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_dd_voraussetzung">
+          <mapResponse identifier="dd_voraussetzung"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="dd_n"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_dd_n">
+          <mapResponse identifier="dd_n"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <setOutcomeValue identifier="SCORE">
+      <sum>
+        <variable identifier="SCORE_dd_interaktion"/>
+        <variable identifier="SCORE_dd_design"/>
+        <variable identifier="SCORE_dd_voraussetzung"/>
+        <variable identifier="SCORE_dd_n"/>
+      </sum>
+    </setOutcomeValue>
     <responseCondition>
       <responseIf>
         <gt>
@@ -59,9 +216,20 @@
     </responseCondition>
     <responseCondition>
       <responseIf>
-        <isNull>
-          <variable identifier="RESPONSE"/>
-        </isNull>
+        <and>
+          <isNull>
+            <variable identifier="dd_interaktion"/>
+          </isNull>
+          <isNull>
+            <variable identifier="dd_design"/>
+          </isNull>
+          <isNull>
+            <variable identifier="dd_voraussetzung"/>
+          </isNull>
+          <isNull>
+            <variable identifier="dd_n"/>
+          </isNull>
+        </and>
         <setOutcomeValue identifier="FEEDBACKBASIC">
           <baseValue baseType="identifier">empty</baseValue>
         </setOutcomeValue>
@@ -97,78 +265,6 @@
         </setOutcomeValue>
       </responseIf>
     </responseCondition>
-    <responseCondition>
-      <responseIf>
-        <and>
-          <match>
-            <baseValue baseType="identifier">incorrect</baseValue>
-            <variable identifier="FEEDBACKBASIC"/>
-          </match>
-        </and>
-        <setOutcomeValue identifier="FEEDBACKMODAL">
-          <multiple>
-            <variable identifier="FEEDBACKMODAL"/>
-            <baseValue baseType="identifier">incorrect</baseValue>
-          </multiple>
-        </setOutcomeValue>
-      </responseIf>
-    </responseCondition>
-    <responseCondition>
-      <responseIf>
-        <and>
-          <match>
-            <baseValue baseType="identifier">correct</baseValue>
-            <variable identifier="FEEDBACKBASIC"/>
-          </match>
-        </and>
-        <setOutcomeValue identifier="FEEDBACKMODAL">
-          <multiple>
-            <variable identifier="FEEDBACKMODAL"/>
-            <baseValue baseType="identifier">correct</baseValue>
-          </multiple>
-        </setOutcomeValue>
-      </responseIf>
-    </responseCondition>
-    <responseCondition>
-      <responseIf>
-        <match>
-          <index n="1">
-            <variable identifier="RESPONSE"/>
-          </index>
-          <index n="1">
-            <correct identifier="RESPONSE"/>
-          </index>
-        </match>
-        <setOutcomeValue identifier="SCORE">
-          <sum>
-            <variable identifier="SCORE"/>
-            <baseValue baseType="float">0.5</baseValue>
-          </sum>
-        </setOutcomeValue>
-      </responseIf>
-    </responseCondition>
-    <responseCondition>
-      <responseIf>
-        <match>
-          <index n="2">
-            <variable identifier="RESPONSE"/>
-          </index>
-          <index n="2">
-            <correct identifier="RESPONSE"/>
-          </index>
-        </match>
-        <setOutcomeValue identifier="SCORE">
-          <sum>
-            <variable identifier="SCORE"/>
-            <baseValue baseType="float">0.5</baseValue>
-          </sum>
-        </setOutcomeValue>
-      </responseIf>
-    </responseCondition>
   </responseProcessing>
-  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show">model answer</modalFeedback>
-  <modalFeedback identifier="incorrect" outcomeIdentifier="FEEDBACKMODAL" showHide="show">wrong answer</modalFeedback>
-  <modalFeedback identifier="correct" outcomeIdentifier="FEEDBACKMODAL" showHide="show">correct answer</modalFeedback>
-  <div class="rqti-ai-result">Score:
-<printedVariable identifier="SCORE" format="%d"/></div>
+  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show"/>
 </assessmentItem>
