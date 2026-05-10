@@ -20,7 +20,7 @@ rmd2zip <- function(file, path = getwd(), verification = FALSE) {
     test_id <- task@identifier
     task@identifier <- paste0("task_", task@identifier)
     section <- new("AssessmentSection", assessment_item = list(task))
-    test <- new("AssessmentTestOpal",
+    test <- new("AssessmentTest",
                 identifier = test_id,
                 title = "QTIJS Preview", section = list(section))
     createQtiTest(test, dir = path, verification = verification,
@@ -30,7 +30,7 @@ rmd2zip <- function(file, path = getwd(), verification = FALSE) {
 #' Create qti-XML task file from Rmd (md) description
 #'
 #' Create XML file for question specification from Rmd (md) description
-#' according to qti 2.1 infromation model
+#' according to qti 2.1 information model
 #' @param file A string of path to file with markdown description of question.
 #' @param path A string, optional; a folder to store xml file. Default is
 #'   working directory.
@@ -148,27 +148,56 @@ create_question_object <- function(file) {
 }
 
 create_entry_slots <- function(html, attrs) {
+    question <- xml2::xml_find_first(html, "//section[@id='question']")
 
-    html <- xml2::xml_find_all(html, "//section[@id='question']")
-    html_str <- paste(clean_question(html), collapse = "")
+    # omit heading used only as section marker
+    xml2::xml_remove(xml2::xml_find_all(question, "./h1"))
 
-    entry_gaps <- xml2::xml_find_all(html, "//gap")
+    entry_gaps <- xml2::xml_find_all(question, ".//gap")
     ids <- make_ids(length(entry_gaps), "response")
-
     gaps <- Map(create_gap_object, entry_gaps, ids)
-    end <- unlist(gregexpr("<gap>", html_str)) - 1L
-    begin <- unlist(gregexpr("</gap>", html_str)) + 6L
-    all <- sort(c(begin, end, 1, nchar(html_str)))
+
+    html_qst <- xml2::xml_contents(question)
+    html_str <- paste(as.character(html_qst), collapse = "")
+    html_str <- change_symbols(html_str)
+
+    placeholders <- paste0("___RQTI_GAP_", seq_along(gaps), "___")
+    for (i in seq_along(placeholders)) {
+        html_str <- sub("<sign\\s*/>", placeholders[i], html_str)
+    }
+
+    pattern <- paste(placeholders, collapse = "|")
+    m <- gregexpr(pattern, html_str)[[1]]
 
     content <- list()
-    for (i in seq(length(all) - 1)) {
-        text_chank <- substring(html_str, all[i], all[i + 1L])
-        if ((i %% 2) == 0) {
-            text_chank <- gaps[i / 2]
+    last_end <- 0L
+
+    for (i in seq_along(m)) {
+        start <- m[i]
+        end <- start + attr(m, "match.length")[i] - 1L
+
+        # html before placeholder
+        if (start > last_end + 1L) {
+            chunk <- substr(html_str, last_end + 1L, start - 1L)
+            if (nzchar(chunk)) {
+                content[[length(content) + 1]] <- chunk
+            }
         }
-        content <- append(content, text_chank)
+
+        # corresponding gap object
+        content[[length(content) + 1]] <- gaps[[i]]
+        last_end <- end
     }
-    attrs <- c(Class = "Entry", content = as.list(list(content)), attrs)
+
+    # trailing html after last placeholder
+    if (last_end < nchar(html_str)) {
+        chunk <- substr(html_str, last_end + 1L, nchar(html_str))
+        if (nzchar(chunk)) {
+            content[[length(content) + 1]] <- chunk
+        }
+    }
+
+    attrs <- c(Class = "Entry", content = list(content), attrs)
     return(attrs)
 }
 
@@ -357,10 +386,12 @@ change_symbols <- function(cont) {
         cont <- gsub("<br>", "<br/>", cont)
         cont <- gsub("\r", "", cont)
         cont <- gsub("^\\n|\\n$", "", cont)
-        cont <- gsub(">\n<", "><", cont)
+        cont <- gsub(">\\s+<", "><", cont)
         cont <- gsub("\n", " ", cont)
         cont <- gsub("<br/> ", "<br/>", cont)
         cont <- gsub("   ", "", cont)
+        cont <- gsub("<section\\b", "<div", cont)
+        cont <- gsub("</section>", "</div>", cont)
     } else {
         cont <- gsub("<code>", "<code><br />", cont)
         cont <- gsub("\\\r\\\n", "<br />", cont)
@@ -425,7 +456,7 @@ define_ids <- function(vect, abbr, type) {
     } else {
         ids <- make_ids(length(vect), type)
     }
-    # add prefix when it starst wiht digit
+    # add prefix when it starst with digit
     ids <- sapply(ids, function(x) ifelse(grepl("^\\d", x), paste0(type, x), x),
                   USE.NAMES = FALSE)
     # eliminate special character
@@ -552,12 +583,61 @@ rmd_detect_type <- function(file) {
 pandoc_html_convert <- function(input_file, output_file_name, dir_name) {
     pnd_v <- numeric_version("2.19")
     emb <- ifelse(rmarkdown::pandoc_version() > pnd_v, "--embed-resources", "")
-    options <- c("-o", output_file_name, "-f", "markdown", "-t", "html5",
+
+    lua_filter <- system.file("pandoc", "remove-ol-type.lua", package = "rqti")
+    lua_opt <- if (nzchar(lua_filter)) paste0("--lua-filter=", lua_filter) else character(0)
+
+    options <- c("-o", output_file_name, "-f", "markdown+tex_math_dollars", "-t", "html5",
                  "--mathjax",
                  emb,
                  "--section-divs",
                  "--no-highlight",
-                 "--wrap=none", "+RTS", "-M512M")
-    pandoc_convert(input_file, options = options, wd = dir_name)
-    return(file.path(dir_name, output_file_name))
+                 "--wrap=none",
+                 lua_opt,
+                 "+RTS", "-M512M")
+
+    rmarkdown::pandoc_convert(input_file, options = options, wd = dir_name)
+
+    output_path <- file.path(dir_name, output_file_name)
+
+    html <- paste(readLines(output_path, warn = FALSE), collapse = "\n")
+
+    html <- gsub(
+        '<span class="math (inline|display)">((?:.|\\n)*?)</span>',
+        '\\2',
+        html,
+        perl = TRUE
+    )
+
+    html <- gsub(
+        '(<img\\b[^>]*?)\\s+role="img"',
+        '\\1',
+        html,
+        perl = TRUE
+    )
+
+    html <- gsub(
+        '(<img\\b(?![^>]*\\salt=)([^>]*?))\\s+aria-label="([^"]*)"',
+        '\\1 alt="\\3"',
+        html,
+        perl = TRUE
+    )
+
+    html <- gsub(
+        '(<img\\b[^>]*?)\\s+aria-label="[^"]*"',
+        '\\1',
+        html,
+        perl = TRUE
+    )
+
+    html <- gsub(
+        '<img\\b(?![^>]*\\salt=)([^>]*)>',
+        '<img alt="Image"\\1>',
+        html,
+        perl = TRUE
+    )
+
+    writeLines(html, output_path, useBytes = TRUE)
+
+    return(output_path)
 }

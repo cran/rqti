@@ -1,3 +1,10 @@
+simplemath <- function(number) {
+    # out <- htmltools::tag(display = "inline", htmltools::tag("semantics", list(htmltools::tag("mn", number), htmltools::tag("annotation", list("encoding" = "application/x-tex", number)))))
+    # out <- gsub("\n[ ]*", "", as.character(out))
+    out <- paste0("\\(", number, "\\)")
+    out
+}
+
 test_that("Testing SingleChoice where answer is $nummer", {
     path <- test_path("file/md/sc_example3.md")
     sut <- create_question_object(path)
@@ -7,10 +14,7 @@ test_that("Testing SingleChoice where answer is $nummer", {
                     content = list(content),
                     identifier = "eco",
                     title = "Physic",
-                    choices = c("<span class=\"math inline\">\\(299\\)</span>",
-                                "<span class=\"math inline\">\\(300\\)</span>",
-                                "<span class=\"math inline\">\\(199\\)</span>",
-                                "<span class=\"math inline\">\\(99\\)</span>"),
+                    choices = sapply(c(299, 300, 199, 99), simplemath),
                     shuffle = TRUE,
                     prompt = "",
                     choice_identifiers = c("ChoiceA",
@@ -640,4 +644,45 @@ test_that("Checking rmd_checker() behavior when 'library(rqti)'
     )
 
     expect_equal("Helper functions are found. Call 'library(rqti)' inside Rmd file.", error_message)
+})
+
+
+test_that("adjacent dropdowns are handled without malformed HTML fragments", {
+    skip_if_not_installed("xml2")
+
+    x <- '---
+type: dropdown
+---
+
+```{r echo=F}
+library(rqti)
+```
+
+# question
+
+The philosophy of the rqti package is <<do one thing and do it well|one for all>>.
+
+Under the hood, the rqti package uses `r dropdown(c("S4 OOP", "S3 OOP", "no OOP", "R6 OOP"))``r dropdown(c("S4 OOP", "S3 OOP", "no OOP", "R6 OOP"))`.
+
+# feedback
+
+The package `rqti` is specialized for producing xml rqti files so "do one thing
+and do it well" is more appropriate. Under the hood we use S4 OOP.
+'
+
+    tf <- tempfile(fileext = ".Rmd")
+    writeLines(x, tf)
+
+    obj <- rqti::create_question_object(tf)
+
+    expect_s4_class(obj, "Entry")
+    expect_length(obj@content, 6)
+
+    expect_match(obj@content[[1]], "<p>The philosophy of the rqti package is ")
+    expect_s4_class(obj@content[[2]], "InlineChoice")
+    expect_match(obj@content[[3]], "\\.</p><p>Under the hood, the rqti package uses ")
+
+    expect_s4_class(obj@content[[4]], "InlineChoice")
+    expect_s4_class(obj@content[[5]], "InlineChoice")
+    expect_match(obj@content[[6]], "\\.</p>")
 })

@@ -1,3 +1,6 @@
+setClassUnion("NumericOrNull", c("numeric", "NULL"))
+setClassUnion("CharacterOrNull", c("character", "NULL"))
+
 #' Class "AssessmentTest"
 #'
 #' Class `AssessmentTest` is responsible for creating XML exam files according
@@ -40,9 +43,11 @@ setClass("AssessmentTest", slots = c(identifier = "character",
                                      max_attempts = "numeric",
                                      allow_comment = "logical",
                                      rebuild_variables = "logical",
-                                     academic_grading = "numeric",
+                                     fallback_titles = "character",
+                                     academic_grading = "NumericOrNull",
                                      grade_label = "character",
                                      table_label = "character",
+                                     stylesheet_path = "CharacterOrNull",
                                      metadata = "QtiMetadata"),
     prototype = prototype(navigation_mode = "nonlinear",
                           submission_mode = "individual",
@@ -51,16 +56,19 @@ setClass("AssessmentTest", slots = c(identifier = "character",
                           max_attempts = NA_integer_,
                           allow_comment = TRUE,
                           rebuild_variables = NA,
-                          academic_grading = c("1.0" = 0.95, "1.3" = 0.9, "1.7" = 0.85, "2.0" = 0.8,
-                                               "2.3" = 0.75, "2.7" = 0.7, "3.0" = 0.65, "3.3" = 0.6,
-                                               "3.7" = 0.55, "4.0" = 0.5, "5.0" = 0),
+                          fallback_titles = "generic",
+                          academic_grading = NULL,
                           grade_label = c(en="Grade", de="Note"),
-                          table_label = c(en="Grade", de="Note"))
+                          table_label = c(en="Grade", de="Note"),
+                          stylesheet_path = NULL)
 )
 
 
 setMethod("initialize", "AssessmentTest", function(.Object, ...) {
     .Object <- callNextMethod()
+
+    .Object@fallback_titles <- match.arg(.Object@fallback_titles,
+                                         c("filename", "generic"))
 
     if (length(.Object@identifier) == 0) {
         .Object@identifier <- generate_id(type = "test")
@@ -90,6 +98,11 @@ setMethod("initialize", "AssessmentTest", function(.Object, ...) {
         }
     }
 
+    .Object@section <- assign_fallback_titles(
+        .Object@section,
+        mode = .Object@fallback_titles
+    )
+
     validObject(.Object)
     .Object
 })
@@ -105,13 +118,24 @@ setMethod("initialize", "AssessmentTest", function(.Object, ...) {
 #'@param title A character value, optional, representing the file title. By
 #'  default, it takes the value of the identifier.
 #'@param time_limit An integer value, optional, controlling the time given to a
-#'  candidate for the test in minutes. Default is 90 minutes.
+#'  candidate for the test in minutes. Default is \code{NULL}.
 #'@param max_attempts An integer value, optional, indicating the maximum number
 #'  of attempts allowed for the candidate. Default is 1.
-#' @param academic_grading A named numeric vector that defines the grade table shown to the candidate as feedback at the end of the test. The default is the German grading system:
-#' gt <- c("1.0" = 0.95, "1.3" = 0.9, "1.7" = 0.85, "2.0" = 0.8, "2.3" = 0.75, "2.7" = 0.7, "3.0" = 0.65, "3.3" = 0.6, "3.7" = 0.55, "4.0" = 0.5, "5.0" = 0)
-#' Each grade corresponds to a minimum percentage score required to achieve it.
-#' To hide the grading table at the end of the test, set this parameter to NA_real_.
+#' @param fallback_titles A character value, optional, controlling how titles
+#'   are assigned when no explicit title is provided. Possible values are
+#'   "filename" (use filenames as titles) and "generic" (use generic labels
+#'   such as "Section 1", "Section 1.2", or "Task 1.2.1"). Default is
+#'   "generic".
+#' @param academic_grading A named numeric vector that defines the grade table
+#'   shown to the candidate as feedback at the end of the test.
+#'
+#'   Each grade corresponds to the minimum percentage score required to achieve it.
+#'   A helper function \code{german_grading()} is available to generate a common
+#'   German grading scheme.
+#'
+#'   The default is \code{NULL}, which means that no grading table is shown.
+#'   To display a grading table, provide a named numeric vector or use
+#'   \code{german_grading()}.
 #'@param grade_label A character value, optional; a short message that shows
 #'  with a grade in the final feedback; for multilingual use, it can be a named
 #'  vector with two-letter ISO language codes as names (e.g., c(en="Grade",
@@ -138,6 +162,12 @@ setMethod("initialize", "AssessmentTest", function(.Object, ...) {
 #'@param rebuild_variables A boolean, optional, enabling the recalculation of
 #'  variables and reshuffling the order of choices for each item-attempt.
 #'  Default is `TRUE.`
+#'@param stylesheet_path A character value, optional, specifying the path to a
+#'   custom CSS stylesheet. If provided, the stylesheet is included at the
+#'   assessment test level and applied during rendering. When
+#'   \code{academic_grading} is set, the default stylesheet
+#'   \code{styles/rqti.css} is included automatically; a user-defined stylesheet
+#'   is added in addition and may override default styles.
 #'@param metadata An object of class [QtiMetadata] that holds metadata
 #'  information about the test. By default it creates [QtiMetadata] object. See
 #'  [qtiMetadata()].
@@ -155,19 +185,20 @@ setMethod("initialize", "AssessmentTest", function(.Object, ...) {
 #'
 #'@export
 assessmentTest <- function(section, identifier = generate_id(type = "test"),
-                           title = identifier, time_limit = 90L,
+                           title = identifier, time_limit = NULL,
                            max_attempts = 1L,
-                           academic_grading = c("1.0" = 0.95, "1.3" = 0.9, "1.7" = 0.85, "2.0" = 0.8,
-                                                "2.3" = 0.75, "2.7" = 0.7, "3.0" = 0.65, "3.3" = 0.6,
-                                                "3.7" = 0.55, "4.0" = 0.5, "5.0" = 0),
+                           fallback_titles = "generic",
+                           academic_grading = NULL,
                            grade_label = c(en="Grade", de="Note"),
                            table_label = c(en="Grade", de="Note"),
                            navigation_mode = "nonlinear",
                            submission_mode = "individual",
                            allow_comment = TRUE, rebuild_variables = TRUE,
-                           metadata = qtiMetadata(), points = NA_real_) {
+                           metadata = qtiMetadata(),
+                           stylesheet_path = NULL, points = NA_real_) {
     params <- as.list(environment())
     params$Class <- "AssessmentTest"
+    params$time_limit <- ifelse(is.null(time_limit), NA_integer_, time_limit)
     obj <- do.call("new", params)
     return(obj)
 }
@@ -208,6 +239,19 @@ setGeneric("createAssessmentTest",
 #' @aliases createZip
 setGeneric("createZip", function(object, input, output, file_name, zip_only) {
     StandartGeneric("createZip")
+})
+
+#' Create a configuration file for QTI test
+#'
+#' Generic function for creating additional configuration file for the archive with test
+#'
+#' @param object an instance of the S4 object [AssessmentTest]
+#' @param output string, a folder to store an xml configuration files
+#' @docType methods
+#' @rdname createConfigurationFile-methods
+#' @aliases createConfigurationFile
+setGeneric("createConfigurationFile", function(object, output) {
+    StandartGeneric("createConfigurationFile")
 })
 
 #' @rdname createAssessmentTest-methods
@@ -262,7 +306,9 @@ setMethod("createZip", signature(object = "AssessmentTest"),
 #' @aliases prepareQTIJSFiles,AssessmentTest
 setMethod("prepareQTIJSFiles", signature(object = "AssessmentTest"),
           function(object, dir) {
-              zip_file <- createQtiTest(object, dir, TRUE)
+              zip_file <- createQtiTest(object = object,
+                                        dir = dir,
+                                        verification = FALSE)
               zip::unzip(zip_file, exdir = dir)
               unlink(zip_file)
               return(NULL)
@@ -275,4 +321,77 @@ setMethod("createMetadata", signature(object = "AssessmentTest"),
           function(object) {
               create_metadata(object)
           })
+
+#' @rdname createConfigurationFile-methods
+#' @aliases createConfigurationFile,AssessmentTest
+setMethod("createConfigurationFile", signature(object = "AssessmentTest"),
+          function(object, output) {
+          })
+
+assign_fallback_titles <- function(section,
+                                   mode = c("filename", "generic")) {
+    mode <- match.arg(mode)
+
+    if (mode == "filename") {
+        return(section)
+    }
+
+    warned_paths <- FALSE
+
+    for (i in seq_along(section)) {
+        res <- assign_titles_section(
+            sec = section[[i]],
+            path = as.character(i),
+            warned_paths = warned_paths
+        )
+        section[[i]] <- res$section
+        warned_paths <- res$warned_paths
+    }
+
+    return(section)
+}
+
+assign_titles_section <- function(sec, path, warned_paths = FALSE) {
+    sec@title <- paste("Section", path)
+
+    if (length(sec@assessment_item) > 0) {
+        task_counter <- 0
+        subsection_counter <- 0
+
+        for (j in seq_along(sec@assessment_item)) {
+            obj <- sec@assessment_item[[j]]
+
+            if (is(obj, "AssessmentSection")) {
+                subsection_counter <- subsection_counter + 1
+                sub_path <- paste0(path, ".", subsection_counter)
+
+                res <- assign_titles_section(
+                    sec = obj,
+                    path = sub_path,
+                    warned_paths = warned_paths
+                )
+                obj <- res$section
+                warned_paths <- res$warned_paths
+
+            } else if (is.character(obj) && length(obj) == 1) {
+                if (!warned_paths) {
+                    message(
+                        "Generic fallback titles cannot be assigned to assessment items ",
+                        "provided as XML file paths. These entries keep their original titles."
+                    )
+                    warned_paths <- TRUE
+                }
+
+            } else {
+                task_counter <- task_counter + 1
+                task_path <- paste0(path, ".", task_counter)
+                obj@title <- paste("Task", task_path)
+            }
+
+            sec@assessment_item[[j]] <- obj
+        }
+    }
+
+    return(list(section = sec, warned_paths = warned_paths))
+}
 

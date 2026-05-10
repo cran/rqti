@@ -8,7 +8,6 @@
 #' @param hide_filename A boolean value, TRUE to hide original file names by
 #'   default.
 #' @import xml2
-#' @import lubridate
 #' @importFrom zip zip_list
 #' @return A dataframe with attribues of the candidates outcomes and result
 #'   variables.
@@ -23,6 +22,7 @@
 #'  * 'is_answer_given' - TRUE if candidate gave the answer on question,
 #'   otherwise FALSE
 #'  * 'title' - the values of attribute 'title' of assessment items
+#'  * 'scorer_comment' - scorer's comment for manually scored items (if available).
 #'
 #'   2.With option level = "item" data frame consists of columns:
 #' * 'file' - name of the xml file with test results (to identify
@@ -48,7 +48,6 @@
 #' df <- extract_results(file, level = "item")
 #' }
 #'
-#' @import digest
 #' @export
 extract_results <- function(file, level = "task", hide_filename = TRUE) {
     if (!all(file.exists(file))) stop("One or more files in list do not exist",
@@ -161,13 +160,13 @@ extract_xml <- function(file) {
 get_result_attr_answers<- function(file, hide_filename) {
     file_name <- clean_name(file)
     if (hide_filename) {
-        file_name <- digest(file_name, algo = "sha1", serialize = FALSE)
+        file_name <- sha1_generator(file_name)
     }
 
     doc <- xml2::read_xml(file)
     node_dt <- xml2::xml_find_first(doc, ".//d1:testResult")
     test_dt <- xml2::xml_attr(node_dt, "datestamp")
-    test_dt <- lubridate::ymd_hms(test_dt)
+    test_dt <- as.POSIXct(strptime(test_dt, "%Y-%m-%dT%H:%M:%S", tz = "UTC"))
 
     items_result <- unique_result_set(doc)
 
@@ -176,6 +175,7 @@ get_result_attr_answers<- function(file, hide_filename) {
     durations <- Map(get_duration, items_result)
     scores <- Map(get_score, items_result, "SCORE")
     maxes <- Map(get_score, items_result, "MAXSCORE")
+    scomments <- sapply(items_result, get_scorer_comment)
 
     data <- data.frame(file = rep(file_name, length(ids_item)),
                        date = rep(test_dt, length(ids_item)),
@@ -183,8 +183,24 @@ get_result_attr_answers<- function(file, hide_filename) {
                        duration = as.numeric(durations),
                        score_candidate = as.numeric(scores),
                        score_max = as.numeric(maxes),
-                       is_answer_given = igiven)
+                       is_answer_given = igiven,
+                       scorer_comment = scomments)
     return(data)
+}
+
+# This function is cross-platform to get SHA1 hash-string
+sha1_generator <- function(x) {
+    tf <- tempfile()
+    writeLines(x, tf)
+
+    if (.Platform$OS.type == "windows") {
+        res <- system2("certutil", c("-hashfile", tf, "SHA1"), stdout = TRUE)
+        res <- res[grep("^[0-9A-Fa-f]{40}$", res)]
+        tolower(res)
+    } else {
+        res <- system2("sha1sum", tf, stdout = TRUE)
+        sub(" .*", "", res)
+    }
 }
 
 # rebuild xml nodeset to leave only results after tutor evaluation if it took place
@@ -217,9 +233,8 @@ unique_result_set <- function(doc) {
 # check scored attribute
 check_scored <- function(node) {
     outcome_var <- xml_find_all(node, ".//d1:outcomeVariable")
-    # TODO use manualScored=True as a condition
-    is_tutor <- xml_has_attr(outcome_var, "scorer")
-    result <- any(is_tutor)
+    manual_attr <- xml_attr(outcome_var, "manualScored")
+    result <- any(!is.na(manual_attr) & manual_attr == "true")
     return(result)
 }
 # take itemResult and return duration or NA
@@ -234,6 +249,15 @@ get_score <- function(node, type) {
     score_node <- xml2::xml_find_all(node, pattern)
     score <- ifelse (length(score_node) == 0, NA, xml2::xml_text(score_node))
     return(score)
+}
+
+get_scorer_comment <- function(node) {
+    comment_node <- xml_find_first(node, ".//d1:scorerComment")
+    if (is.na(comment_node)) return(NA_character_)
+
+    comment_text <- xml_text(comment_node)
+    if (comment_text == "") return(NA_character_)
+    return(comment_text)
 }
 
 clean_name <- function(file) {
@@ -251,13 +275,13 @@ get_result_attr_options <- function(file, hide_filename) {
     file_name <- clean_name(file)
     file_name <- sub("assessmentResult_", "", file_name)
     if (hide_filename) {
-        file_name <- digest(file_name, algo = "sha1", serialize = FALSE)
+        file_name <- sha1_generator(file_name)
     }
 
     doc <- xml2::read_xml(file)
     node_dt <- xml2::xml_find_first(doc, ".//d1:testResult")
     test_dt <- xml2::xml_attr(node_dt, "datestamp")
-    test_dt <- lubridate::ymd_hms(test_dt)
+    test_dt <- as.POSIXct(test_dt, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
 
     items_result <- unique_result_set(doc)
 

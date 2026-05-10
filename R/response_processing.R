@@ -37,6 +37,9 @@ gte <- create_tag("gte")
 tr <- create_tag("tr")
 td <- create_tag("td")
 th <- create_tag("th")
+tbl <- create_tag("table")
+thead <- create_tag("thead")
+tbody <- create_tag("tbody")
 
 # process modalfeedback for all match types and mc
 create_default_resp_processing <- function(object) {
@@ -77,7 +80,8 @@ make_first_cond_sc_order <- function() {
     match_tag <- match(list(variable("RESPONSE"), correct("RESPONSE")))
     set_ov_tag <- setOutcomeValue(list(identifier = "SCORE", variable("MAXSCORE")))
     response_elseif <- responseElseIf(list(match_tag, set_ov_tag))
-    resp_cond1 <- responseCondition(list(response_if, response_elseif))
+    response_else <- responseElse(list(setOutcomeValue(list(identifier = "SCORE", variable("MINSCORE")))))
+    resp_cond1 <- responseCondition(list(response_if, response_elseif, response_else))
     return(resp_cond1)
 }
 
@@ -273,18 +277,39 @@ create_feedback_grade <- function(id, grade, label) {
                              tag("p", message)))
 }
 
-#' @importFrom knitr kable
-#' @importFrom kableExtra kable_styling
-create_feedback_grade_table <- function(df, table_label) {
-    col_nms <- c(table_label, "Min", "Max")
-    cont <- kable(df, format = "html", col.names = col_nms, digits = 2)
-    cont <- kable_styling(cont, position = "left", full_width = F)
-    grade_table <- htmltools::HTML(cont)
+
+create_feedback_grade_table <- function(df, table_label,
+                                        table_class = "rqti-grade-table") {
+    stopifnot(is.data.frame(df))
+    stopifnot(ncol(df) == 3)
+
+    header_row <- thead(
+        tr(
+            tagList(th(table_label), th("Min"), th("Max"))
+            )
+        )
+
+    body_rows <- lapply(seq_len(nrow(df)), function(i) {
+        tr(tagList(
+                td(as.character(df[i, 1])),
+                td(as.character(df[i, 2])),
+                td(as.character(df[i, 3]))
+            )
+        )
+    })
+
+    tbl_body <- tbody(body_rows)
+
+    grade_table <- tbl(list(class = table_class))
+
+    grade_table <- tagAppendChildren(grade_table, header_row, tbl_body)
+
     tag("testFeedback", list(identifier = "feedback_grade_table",
                              outcomeIdentifier = "FEEDBACKTABLE",
                              showHide = "show", access = "atEnd",
                              grade_table))
 }
+
 
 # this function makes condition to show grading table in feedback
 create_resp_cond_grade_table <- function() {
@@ -300,4 +325,28 @@ create_resp_cond_grade_table <- function() {
     t_outcomeIf <- outcomeIf(list(t_and, t_setOutcomeValue))
     t_outcomeCondition <- outcomeCondition(list(t_outcomeIf))
     return(t_outcomeCondition)
+}
+
+#' German grading scale
+#'
+#' A helper function that returns a named numeric vector representing
+#' a common German grading scheme. The names correspond to grades and
+#' the values define the minimum proportion of points required to
+#' achieve the respective grade.
+#'
+#' @return A named numeric vector with grades as names and minimum
+#'   score proportions as values.
+#'
+#' @examples
+#' german_grading()
+#'
+#'
+#' @export
+german_grading <- function() {
+    c(
+        "1.0" = 0.95, "1.3" = 0.9,  "1.7" = 0.85,
+        "2.0" = 0.8,  "2.3" = 0.75, "2.7" = 0.7,
+        "3.0" = 0.65, "3.3" = 0.6,  "3.7" = 0.55,
+        "4.0" = 0.5,  "5.0" = 0
+    )
 }

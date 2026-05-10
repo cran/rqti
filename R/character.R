@@ -9,7 +9,7 @@ setMethod("buildAssessmentSection", signature(object = "character"),
                   doc <- xml2::read_xml(f_path)
                   if (verify) {
                       valid <- verify_qti(doc)
-                      if (!valid) warning("xml file \'", object, "\' is not valid")
+                      if (!valid$valid) warning("xml file \'", object, "\' is not valid")
                   }
 
                   id <- xml2::xml_attr(doc, "identifier")
@@ -63,10 +63,11 @@ setMethod("getPoints", signature(object = "character"),
                   return(1)
               }
               doc <- xml2::read_xml(object)
-              od_tag  <- xml2::xml_find_all(doc, ".//d1:outcomeDeclaration
+              od_tag  <- xml2::xml_find_first(doc, ".//d1:outcomeDeclaration
                                             [@identifier='MAXSCORE']")
-              points <- as.numeric(xml2::xml_text(od_tag))
-              if (is.na(points)) points <- 1
+              points <- xml2::xml_text(od_tag)
+              points <- suppressWarnings(as.numeric(points))
+              points <- if (length(points) == 0 || is.na(points)) 1 else points
               return(points)
           })
 
@@ -104,8 +105,8 @@ setMethod("createQtiTest", signature(object = "character"),
                   if (ext %in% c("Rmd", "md")) file <- rmd2zip(file, path = dir)
                   if (ext == "xml") {
                       section_obj <- section(file, title = "Preview")
-                      test_obj <- test4opal(content = section_obj,
-                                            identifier = "Preview")
+                      test_obj <- test(content = section_obj,
+                                       identifier = "Preview")
                       file <- create_qti_test(test_obj, path = dir,
                                               zip_only = TRUE)
                   }
@@ -116,7 +117,8 @@ setMethod("createQtiTest", signature(object = "character"),
 #' @rdname createQtiTask-methods
 #' @aliases createQtiTask,character
 setMethod("createQtiTask", signature(object = "character"),
-          function(object, dir = getwd()) {
+          function(object, dir = getwd(),
+                   verification = FALSE, zip = FALSE) {
 
               file <- object
               if (length(file) > 1) {
@@ -131,7 +133,7 @@ setMethod("createQtiTask", signature(object = "character"),
               if (ext != "zip") {
                   if (ext %in% c("Rmd", "md")) {
                       obj <- create_question_object(file)
-                      file <- createQtiTask(obj, dir = dir, zip = TRUE)
+                      file <- createQtiTask(obj, dir = dir, zip = zip)
                   }
               }
               return(file)
@@ -144,8 +146,26 @@ setMethod("getObject", signature(object = "character"),
               ext <- file_ext(object)
               if (file.exists(object) & (ext %in% c("xml", "Rmd", "md"))) {
                   if (ext %in% c("Rmd", "md")) {
-                      object <- create_question_object(object)
+
+                      fmt <- detect_rmd_format(object)
+
+                      if (identical(fmt, "rqti_rmd")) {
+                          object <- create_question_object(object)
+                      } else if (identical(fmt, "exams_rmd")) {
+                          object <- exams_task(object)
+                          object <- xml_preparation(object)
+                      } else {
+                          stop(
+                              "Cannot determine Rmd format (rqti or exams are allowed): ",
+                              object,
+                              call. = FALSE
+                          )
+                      }
                   }
+                  if (ext %in% "xml") {
+                      object <- xml_preparation(object)
+                  }
+
                   return(object)
               }
               return(NULL)
@@ -181,7 +201,10 @@ setMethod("prepareQTIJSFiles", signature(object = "character"),
                   xml_target <- sub("\\.Rmd$", ".xml", current_rmd_fullpath)
                   file.copy(out_path, xml_target)
               }
-              if (ext == "xml") file.copy(object, out_path)
+              if (ext == "xml") {
+                  object <- xml_preparation(object)
+                  file.copy(object, out_path)
+              }
               if (ext == "zip") zip::unzip(object, exdir = dir)
               params <- knit_params(readLines(object))
               if (!is.null(params$preview_feedback$value)) {
@@ -196,3 +219,46 @@ setMethod("getContributors", signature(object = "character"),
           function(object) {
               return(NULL)
           })
+
+# check images in xml and embedds them
+xml_preparation <- function(obj) {
+    content <- xml2::read_xml(obj)
+    images <- xml2::xml_find_all(content, ".//*[local-name()='img']")
+
+    if (length(images) == 0) return (obj)
+    for (img in images) {
+        src <- xml2::xml_attr(img, "src")
+
+        # skip already embedded images
+        if (grepl("^data:image/", src)) {
+            next
+        }
+        image_path <- file.path(dirname(obj), src)
+
+        if (!file.exists(image_path)) {
+            warning("Image file does not exist: ", src)
+            next
+        }
+
+        ext <- tools::file_ext(image_path)
+        mime <- switch(
+            tolower(ext),
+            "png"  = "image/png",
+            "jpg"  = "image/jpeg",
+            "jpeg" = "image/jpeg",
+            "gif"  = "image/gif",
+            "svg"  = "image/svg+xml",
+            "webp" = "image/webp",
+            "application/octet-stream"
+        )
+
+        encoded <- base64enc::base64encode(image_path)
+        embedded_src <- paste0("data:", mime, ";base64,", encoded)
+
+        xml2::xml_set_attr(img, "src", embedded_src)
+    }
+
+    tmp <- tempfile(fileext = ".xml")
+    xml2::write_xml(content, tmp)
+    return(tmp)
+}

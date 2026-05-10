@@ -4,17 +4,61 @@ generate_id <- function(prefix = "id_", type = "task", digits = 4L) {
     return(id)
 }
 
+
 check_identifier <- function(id, quiet = FALSE) {
-    checker = grepl("^[A-Za-z]", id)
-    checker <- checker & !grepl("[\u00C4\u00E4\u00DF\u00D6\u00F6\u00DC\u00FC]", id)
-    checker <- checker & !grepl("\\s", id)
+    if (!is.character(id) || length(id) != 1) {
+        stop("Identifier must be a single character string.", call. = FALSE)
+    }
+
+    issues <- character()
+
+    if (!grepl("^[A-Za-z_]", id)) {
+        issues <- c(issues, "must start with a letter or '_'")
+    }
+
+    if (grepl("[^A-Za-z0-9_.-]", id)) {
+        issues <- c(issues,
+                    "contains invalid characters (allowed: letters, digits, '_', '-', '.')"
+        )
+    }
+
+    if (grepl(":", id)) {
+        issues <- c(issues, "contains ':' which is not allowed")
+    }
+
+    if (grepl("\\s", id)) {
+        issues <- c(issues, "contains whitespace")
+    }
+
+    if (grepl("[\u00C4\u00E4\u00DF\u00D6\u00F6\u00DC\u00FC]", id)) {
+        issues <- c(issues, "contains German umlauts")
+    }
+
+    checker <- length(issues) == 0
 
     if (!checker && !quiet) {
-        stop("The identifier must start with a letter and not contain spaces",
-        " or umlauts. Error value: ", id, call. = FALSE)
+        stop(
+            sprintf(
+                "Invalid identifier '%s': %s.",
+                id,
+                paste(issues, collapse = "; ")
+            ),
+            call. = FALSE
+        )
     }
+
     return(checker)
 }
+
+
+repair_identifier <- function(id) {
+    if (!is.character(id) || length(id) != 1) {
+        stop("Identifier must be a single character string.", call. = FALSE)
+    }
+
+    gsub("\\s+", "_", id)
+}
+
 
 # helper to put default value into slots of classes without na values
 replace_na <- function(input) {
@@ -70,3 +114,15 @@ lines_expected <- function(input) {
         return(NA_integer_)
     }
 }
+
+# helper to show warning once for recurrent warning messages
+warn_once <- local({
+    warned <- new.env(parent = emptyenv())
+
+    function(msg, id) {
+        if (!exists(id, envir = warned)) {
+            assign(id, TRUE, envir = warned)
+            warning(msg, call. = FALSE)
+        }
+    }
+})

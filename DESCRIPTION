@@ -1,6 +1,6 @@
 Package: rqti
 Title: Create Tests According to QTI 2.1 Standard
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: c(
     person("Andrey", "Shevandrin", email = "shevandrin@gmail.com", 
     role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-0807-2546")),
@@ -17,11 +17,11 @@ Description: Create tests and tasks compliant with the Question & Test Interoper
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.3.3
-Imports: htmltools, xml2, yaml, rmarkdown, servr, rstudioapi, fs,
-        stringr, methods, lubridate, magrittr, httr2, curl, digest,
-        knitr, getPass, keyring, zip, kableExtra, textutils, lifecycle
+Imports: htmltools, xml2, yaml, rmarkdown, servr, rstudioapi, stringr,
+        methods, magrittr, httr2, curl, knitr, getPass, keyring, zip,
+        textutils, lifecycle, exams, base64enc
 Suggests: covr, dplyr, testthat (>= 3.0.0), XML, readr, RCurl,
-        chromote, callr, pkgload
+        chromote, callr, pkgload, httpuv
 Config/testthat/edition: 3
 Config/testthat/parallel: false
 URL: https://github.com/shevandrin/rqti,
@@ -29,18 +29,19 @@ URL: https://github.com/shevandrin/rqti,
 BugReports: https://github.com/shevandrin/rqti/issues
 Collate: 'rqti.R' 'QtiMetadata.R' 'ModalFeedback.R' 'AssessmentItem.R'
         'AssessmentSection.R' 'AssessmentTest.R' 'AssessmentTestOpal.R'
-        'Choice.R' 'CorrectFeedback.R' 'MatchTable.R' 'DirectedPair.R'
-        'Entry.R' 'Essay.R' 'Gap.R' 'InlineChoice.R' 'LMS.R'
-        'MultipleChoice.R' 'MultipleChoiceTable.R' 'NumericGap.R'
-        'OneInColTable.R' 'OneInRowTable.R' 'Opal.R' 'Ordering.R'
-        'SingleChoice.R' 'TextGap.R' 'TextGapOpal.R' 'WrongFeedback.R'
-        'character.R' 'extract_results.R' 'helpers.R'
+        'AssessmentTestOpenOlat.R' 'Choice.R' 'CorrectFeedback.R'
+        'MatchTable.R' 'DirectedPair.R' 'Entry.R' 'Essay.R' 'Gap.R'
+        'InlineChoice.R' 'LMS.R' 'MultipleChoice.R'
+        'MultipleChoiceTable.R' 'NumericGap.R' 'OneInColTable.R'
+        'OneInRowTable.R' 'Opal.R' 'Ordering.R' 'SingleChoice.R'
+        'TextGap.R' 'TextGapOpal.R' 'WrongFeedback.R' 'character.R'
+        'exams_integration.R' 'extract_results.R' 'helpers.R'
         'knit_functions.R' 'object_builder.R' 'qti_task.R' 'qti_test.R'
-        'response_processing.R' 'rqti_project.R' 'section_builder.R'
-        'utils-pipe.R' 'zzz.R'
+        'response_processing.R' 'rqti-package.R' 'rqti_project.R'
+        'section_builder.R' 'utils-pipe.R' 'verify_qti.R' 'zzz.R'
 Depends: R (>= 2.10)
 NeedsCompilation: no
-Packaged: 2026-02-23 11:47:22 UTC; sheva
+Packaged: 2026-05-10 20:51:12 UTC; andreyshevandrin
 Author: Andrey Shevandrin [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0003-0807-2546>),
   Petr Bondarenko [ctb] (ORCID: <https://orcid.org/0000-0002-5154-9664>),
@@ -51,4 +52,4 @@ Author: Andrey Shevandrin [aut, cre, cph] (ORCID:
   Stiftung für Innovation in der Hochschullehre [fnd]
 Maintainer: Andrey Shevandrin <shevandrin@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-02-23 12:10:02 UTC
+Date/Publication: 2026-05-10 21:10:03 UTC

@@ -8,12 +8,12 @@ test4opal(
   content,
   identifier = "test_identifier",
   title = "Test Title",
-  time_limit = 90L,
+  time_limit = NULL,
   max_attempts = 1L,
   files = NULL,
   calculator = NULL,
-  academic_grading = c(`1.0` = 0.95, `1.3` = 0.9, `1.7` = 0.85, `2.0` = 0.8, `2.3` =
-    0.75, `2.7` = 0.7, `3.0` = 0.65, `3.3` = 0.6, `3.7` = 0.55, `4.0` = 0.5, `5.0` = 0),
+  fallback_titles = "generic",
+  academic_grading = NULL,
   grade_label = c(en = "Grade", de = "Note"),
   table_label = c(en = "Grade", de = "Note"),
   navigation_mode = "nonlinear",
@@ -23,6 +23,7 @@ test4opal(
   show_test_time = TRUE,
   mark_items = TRUE,
   keep_responses = FALSE,
+  stylesheet_path = NULL,
   contributor = list(),
   description = "",
   rights = Sys.getenv("RQTI_RIGHTS"),
@@ -39,7 +40,7 @@ file. Default is 'test_identifier'.}
 Default is 'Test Title'.}
 
 \item{time_limit}{An integer value, optional, controlling the time given to a
-candidate for the test in minutes. Default is 90 minutes.}
+candidate for the test in minutes. Default is \code{NULL}.}
 
 \item{max_attempts}{An integer value, optional, indicating the maximum number
 of attempts allowed for the candidate. Default is 1.}
@@ -55,10 +56,22 @@ calculator to the candidate. Possible values:
 Default is \code{NULL}.
 }}
 
-\item{academic_grading}{A named numeric vector that defines the grade table shown to the candidate as feedback at the end of the test. The default is the German grading system:
-gt <- c("1.0" = 0.95, "1.3" = 0.9, "1.7" = 0.85, "2.0" = 0.8, "2.3" = 0.75, "2.7" = 0.7, "3.0" = 0.65, "3.3" = 0.6, "3.7" = 0.55, "4.0" = 0.5, "5.0" = 0)
-Each grade corresponds to a minimum percentage score required to achieve it.
-To hide the grading table at the end of the test, set this parameter to NA_real_.}
+\item{fallback_titles}{A character value, optional, controlling how titles
+are assigned when no explicit title is provided. Possible values are
+"filename" (use filenames as titles) and "generic" (use generic labels
+such as "Section 1", "Section 1.2", or "Task 1.2.1"). Default is
+"generic".}
+
+\item{academic_grading}{A named numeric vector that defines the grade table
+shown to the candidate as feedback at the end of the test.
+
+Each grade corresponds to the minimum percentage score required to achieve it.
+A helper function \code{german_grading()} is available to generate a common
+German grading scheme.
+
+The default is \code{NULL}, which means that no grading table is shown.
+To display a grading table, provide a named numeric vector or use
+\code{german_grading()}.}
 
 \item{grade_label}{A character value, optional; a short message that shows
 with a grade in the final feedback; for multilingual use, it can be a named
@@ -100,6 +113,13 @@ marking of questions. Default is \code{TRUE}.}
 
 \item{keep_responses}{A boolean, optional, determining whether to save the
 candidate's answers from the previous attempt. Default is \code{FALSE}.}
+
+\item{stylesheet_path}{A character value, optional, specifying the path to a
+custom CSS stylesheet. If provided, the stylesheet is included at the
+assessment test level and applied during rendering. When
+\code{academic_grading} is set, the default stylesheet
+\code{styles/rqti.css} is included automatically; a user-defined stylesheet
+is added in addition and may override default styles.}
 
 \item{contributor}{A list of objects \link{QtiContributor}-type that holds
 metadata information about the authors.}

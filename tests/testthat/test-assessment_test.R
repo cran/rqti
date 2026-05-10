@@ -87,10 +87,11 @@ test_that("Testing method createOutcomeDeclaration() with
                           choice_identifiers = c("1", "2", "3", "4"),
                           points = c(1, 0, 0, 1)
                )
-               order1 <- new("Ordering",
+               order1 <- ordering(
                              identifier = "q4",
                              title = "Order",
                              prompt = "Choose the correct order",
+                             content = "Question",
                              choices = c("Data collection", "Data cleansing",
                                          "Data marking", "Verification and visualization"),
                              choices_identifiers = c("1", "2", "3", "4"),
@@ -103,6 +104,10 @@ test_that("Testing method createOutcomeDeclaration() with
                )
                exam <- new("AssessmentTest",
                            identifier = "id_test",
+                           fallback_titles = "filename",
+                           academic_grading = c("1.0" = 0.95, "1.3" = 0.9, "1.7" = 0.85, "2.0" = 0.8,
+                                                "2.3" = 0.75, "2.7" = 0.7, "3.0" = 0.65, "3.3" = 0.6,
+                                                "3.7" = 0.55, "4.0" = 0.5, "5.0" = 0),
                            section = list(exam_section)
                )
 
@@ -125,6 +130,7 @@ test_that("Testing method createOutcomeDeclaration() with
 				<value>0</value>
 			</defaultValue>
 		</outcomeDeclaration>
+		<stylesheet href=\"styles/rqti.css\" type=\"text/css\"/>
 		<testPart identifier=\"test_part\" navigationMode=\"nonlinear\" submissionMode=\"individual\">
 			<itemSessionControl allowComment=\"true\"/>
 			<assessmentSection identifier=\"sec_id\" fixed=\"false\" title=\"section\" visible=\"true\">
@@ -400,69 +406,69 @@ test_that("Testing method createOutcomeDeclaration() with
 			<p>Grade 1.0</p>
 		</testFeedback>
 		<testFeedback identifier=\"feedback_grade_table\" outcomeIdentifier=\"FEEDBACKTABLE\" showHide=\"show\" access=\"atEnd\">
-    <table class=\"table\" style=\"width: auto !important; \">
+    <table class=\"rqti-grade-table\">
       <thead>
         <tr>
-          <th style=\"text-align:left;\"> Grade </th>
-          <th style=\"text-align:left;\"> Min </th>
-          <th style=\"text-align:left;\"> Max </th>
+          <th>Grade</th>
+          <th>Min</th>
+          <th>Max</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td  style=\"text-align:left;\"> 1.0 </td>
-          <td  style=\"text-align:left;\"> 5.70 </td>
-          <td  style=\"text-align:left;\"> 6.00 </td>
+          <td>1.0</td>
+          <td>5.70</td>
+          <td>6.00</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 1.3 </td>
-          <td  style=\"text-align:left;\"> 5.40 </td>
-          <td  style=\"text-align:left;\"> 5.69 </td>
+          <td>1.3</td>
+          <td>5.40</td>
+          <td>5.69</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 1.7 </td>
-          <td  style=\"text-align:left;\"> 5.10 </td>
-          <td  style=\"text-align:left;\"> 5.39 </td>
+          <td>1.7</td>
+          <td>5.10</td>
+          <td>5.39</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 2.0 </td>
-          <td  style=\"text-align:left;\"> 4.80 </td>
-          <td  style=\"text-align:left;\"> 5.09 </td>
+          <td>2.0</td>
+          <td>4.80</td>
+          <td>5.09</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 2.3 </td>
-          <td  style=\"text-align:left;\"> 4.50 </td>
-          <td  style=\"text-align:left;\"> 4.79 </td>
+          <td>2.3</td>
+          <td>4.50</td>
+          <td>4.79</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 2.7 </td>
-          <td  style=\"text-align:left;\"> 4.20 </td>
-          <td  style=\"text-align:left;\"> 4.49 </td>
+          <td>2.7</td>
+          <td>4.20</td>
+          <td>4.49</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 3.0 </td>
-          <td  style=\"text-align:left;\"> 3.90 </td>
-          <td  style=\"text-align:left;\"> 4.19 </td>
+          <td>3.0</td>
+          <td>3.90</td>
+          <td>4.19</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 3.3 </td>
-          <td  style=\"text-align:left;\"> 3.60 </td>
-          <td  style=\"text-align:left;\"> 3.89 </td>
+          <td>3.3</td>
+          <td>3.60</td>
+          <td>3.89</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 3.7 </td>
-          <td  style=\"text-align:left;\"> 3.30 </td>
-          <td  style=\"text-align:left;\"> 3.59 </td>
+          <td>3.7</td>
+          <td>3.30</td>
+          <td>3.59</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 4.0 </td>
-          <td  style=\"text-align:left;\"> 3.00 </td>
-          <td  style=\"text-align:left;\"> 3.29 </td>
+          <td>4.0</td>
+          <td>3.00</td>
+          <td>3.29</td>
         </tr>
         <tr>
-          <td  style=\"text-align:left;\"> 5.0 </td>
-          <td  style=\"text-align:left;\"> 0.00 </td>
-          <td  style=\"text-align:left;\"> 2.99 </td>
+          <td>5.0</td>
+          <td>0.00</td>
+          <td>2.99</td>
         </tr>
       </tbody>
     </table>
@@ -617,12 +623,13 @@ test_that("Testing of AssessmentTest class that contains non-unique identifiers
     }, "Identifiers of test sections contain non-unique values: sec_id, theSame")
 })
 test_that("Testing of time_limits in AssessmentTest class", {
-              mc1 <- new("MultipleChoice",
+              mc1 <- multipleChoice(
                          identifier = "theSame", prompt = "What does 3/4 + 1/4 = ?",
                          title = "MultipleChoice",
                          choices = c("1", "4/8", "8/4", "4/4"),
                          choice_identifiers = c("1", "2", "3", "4"),
-                         points = c(1, 0, 0, 1))
+                         points = c(1, 0, 0, 1),
+                         content = "<p>What is 3/4 + 1/4 = ?</p>")
               section <- new("AssessmentSection",
                               identifier = "sec_id",
                               title = "section",
@@ -699,11 +706,13 @@ test_that("Test assessmentSection function that return an object
 test_that("Test assessmentTest function that return an object
           of class AssessmentTest", {
 
-              sc <- singleChoice(prompt = "Question", choices = c("A", "B", "C"))
-              es <- new("Essay", prompt = "Question")
+              sc <- singleChoice(prompt = "Question", choices = c("A", "B", "C"),
+                                 content = "<p>Question</p>")
+              es <- essay(prompt = "Question", content = "<p>Question</p>")
               s <- section(c(sc, es), title = "Section with nonrandomized tasks")
 
-              sut <- assessmentTest(list(s), title = "Example of the Exam")
+              sut <- assessmentTest(list(s), title = "Example of the Exam",
+                                    time_limit = 90)
 
               expected <- new("AssessmentTest",
                               title = "Example of the Exam",
@@ -730,13 +739,15 @@ test_that("Test assessmentTestOpal function that return an object
               es <- new("Essay", prompt = "Question")
               s <- section(c(sc, es), title = "Section with nonrandomized tasks")
 
-              sut <- assessmentTestOpal(list(s), title = "Example of the Exam" )
+              sut <- assessmentTestOpal(list(s), title = "Example of the Exam",
+                                        time_limit = 90)
 
               expected <- new("AssessmentTestOpal",
                               title = "Example of the Exam",
                               section = list(s),
                               time_limit = 90,
-                              max_attempts = 1)
+                              max_attempts = 1,
+                              academic_grading = NULL)
 
               expected@identifier <- sut@identifier
               expected@metadata <- sut@metadata

@@ -1,12 +1,16 @@
+content <- "<p>When deciding between renovating a water treatment plant or building a new community pool, what is the government most likely to consider? This is a multiline formula: \\[x-1=y\\]</p>"
+
 mc <- new("MultipleChoice", identifier = "test_2", title = "Economics",
-          content = list("<p>When deciding between renovating a water treatment plant or building a new community pool, what is the government most likely to consider? This is a multiline formula: <span class=\"math display\">\\[x-1=y\\]</span></p>"),
+          content = list(content),
           choices = c("scarcity vs resources",
                       "wages vs prices",
                       "wants vs needs",
                       "consumers vs producers"),
-          points = c(0.5, 0.5, 0, 0))
+          points = c(0.5, 0.5, 0, 0)
+)
+
 mc2 <- new("MultipleChoice", identifier = "Test_2_duplication", title = "Economics",
-          content = list("<p>When deciding between renovating a water treatment plant or building a new community pool, what is the government most likely to consider? This is a multiline formula: <span class=\"math display\">\\[x-1=y\\]</span></p>"),
+          content = list(content),
           choices = c("scarcity vs resources",
                       "wages vs prices",
                       "wants vs needs",
@@ -173,8 +177,8 @@ test_that("Testing a warning message for getPoints method", {
 
 test_that("Testing test4opal() and test() function in section_builder.R ", {
     sut <- section(c(path1, path2))
-    result_1 <- suppressMessages(test4opal(sut))
-    result_2 <- suppressMessages(test(sut))
+    result_1 <- suppressMessages(test4opal(sut, fallback_titles = "filename"))
+    result_2 <- suppressMessages(test(sut, fallback_titles = "filename"))
 
     expect_s4_class(result_1, "AssessmentTestOpal")
     expect_s4_class(result_2, "AssessmentTest")
