@@ -1,6 +1,6 @@
-d73c9dd487259bd04e8548b35ef89fea *DESCRIPTION
+61fce37573a7b959513b954019f05a26 *DESCRIPTION
 879a3d4e8d64a2dfd7d50dec9b8930ad *NAMESPACE
-33b470f27acd98c68eda84d035fb420b *NEWS.md
+8fdbdaa08c4ce2fd35477a14c3e13aad *NEWS.md
 a98dceb280c0a594546e4e59f089a800 *R/AssessmentItem.R
 b2a82fd1cb4459f5a08f6de3fc6d4386 *R/AssessmentSection.R
 974ff25f944cfff5cd38aaefdbc66385 *R/AssessmentTest.R
@@ -30,7 +30,7 @@ eabbdfa53b79423e6de6919c1df1e9ff *R/TextGap.R
 ad690b0f755c12f969d6a87226a6114e *R/WrongFeedback.R
 07ee7ab1f9363b9a71bba354fad3f8f6 *R/character.R
 8871c142536b3b2bdb3dffe5c31ec945 *R/exams_integration.R
-6998e71893a9877d95f9f50bdf6ec638 *R/extract_results.R
+2c99e5263369e9c2d0848b5dc9e9388d *R/extract_results.R
 1c1bad731e3b262c657d4ae68861de4a *R/helpers.R
 345c3032e28b080929203ee227590383 *R/knit_functions.R
 2a21d452971b0f85b0598982643b588a *R/object_builder.R
@@ -47,13 +47,9 @@ ce4148d26c7dc736f5a8b9b7f51cfa22 *R/zzz.R
 755a2af99293edccfc5a87a86e8a2b77 *README.md
 2d7849bd2e73eb710eb8178866ae91f2 *inst/QTIJS/LICENSE
 132b3f844c08eb55a62bd7adcc1679eb *inst/QTIJS/README.md
-d6db960bfc1d4da5e495caffcadc4ca7 *inst/QTIJS/VENDOR_INFO
 1e85d27c4639f6730bb7624094413c74 *inst/QTIJS/VERSION
-8ea10845b9e6d28b091d685860bafdc7 *inst/QTIJS/id_task_8635.xml
-839f1d44ff3f25a6079ccd0da60be0e8 *inst/QTIJS/id_test_1681.xml
-29f86357558ff4e1f449710a44b99469 *inst/QTIJS/imsmanifest.xml
 851f434b2d20641ea88b90147ab4fd69 *inst/QTIJS/index.html
-d09aba8dfcc0fc7b7f14872fc4837d59 *inst/QTIJS/qti.js
+eaa59258e45aae5f192530b3f53d021a *inst/QTIJS/qti.js
 2448a8f1e4734d5834d8f9209f841db2 *inst/QTIJS/rqti.js
 3b7cfbf6d8302896625fba8cddaa41fa *inst/QTIJS/shared/reference.pdf
 b0d29aa4f9de7fd3c365343e8f801582 *inst/QTIJS/styles/rqti.css

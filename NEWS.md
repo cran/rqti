@@ -1,3 +1,12 @@
+# rqti 1.2.1
+
+## Bug fixes
+
+* Replaced platform-specific external SHA1 commands in tests with an R-native
+hash implementation to improve portability across operating systems.
+
+* Fixed MathJax rendering for dynamically loaded referent content in QTI.JS.
+
 # rqti 1.2.0
 
 ## New features
