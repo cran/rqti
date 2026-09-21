@@ -1,6 +1,6 @@
 Package: rqti
 Title: Create Tests According to QTI 2.1 Standard
-Version: 1.2.1
+Version: 1.3.0
 Authors@R: c(
     person("Andrey", "Shevandrin", email = "shevandrin@gmail.com", 
     role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0003-0807-2546")),
@@ -20,8 +20,8 @@ RoxygenNote: 7.3.3
 Imports: htmltools, xml2, yaml, rmarkdown, servr, rstudioapi, stringr,
         methods, magrittr, httr2, curl, knitr, getPass, keyring, zip,
         textutils, lifecycle, exams, base64enc
-Suggests: covr, dplyr, testthat (>= 3.0.0), XML, readr, RCurl,
-        chromote, callr, pkgload, httpuv
+Suggests: covr, dplyr, testthat (>= 3.0.0), XML, readr, RCurl, pkgload,
+        httpuv, later
 Config/testthat/edition: 3
 Config/testthat/parallel: false
 URL: https://github.com/shevandrin/rqti,
@@ -39,9 +39,9 @@ Collate: 'rqti.R' 'QtiMetadata.R' 'ModalFeedback.R' 'AssessmentItem.R'
         'knit_functions.R' 'object_builder.R' 'qti_task.R' 'qti_test.R'
         'response_processing.R' 'rqti-package.R' 'rqti_project.R'
         'section_builder.R' 'utils-pipe.R' 'verify_qti.R' 'zzz.R'
-Depends: R (>= 2.10)
+Depends: R (>= 4.1.0)
 NeedsCompilation: no
-Packaged: 2026-05-13 16:02:18 UTC; andreyshevandrin
+Packaged: 2026-09-21 14:50:16 UTC; andreyshevandrin
 Author: Andrey Shevandrin [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0003-0807-2546>),
   Petr Bondarenko [ctb] (ORCID: <https://orcid.org/0000-0002-5154-9664>),
@@ -52,4 +52,4 @@ Author: Andrey Shevandrin [aut, cre, cph] (ORCID:
   Stiftung für Innovation in der Hochschullehre [fnd]
 Maintainer: Andrey Shevandrin <shevandrin@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-05-14 17:40:03 UTC
+Date/Publication: 2026-09-21 15:50:02 UTC

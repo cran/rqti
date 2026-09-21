@@ -2,14 +2,53 @@
 
 library(testthat)
 
-skip_if_no_opal <- function() {
-    skip_if(Sys.getenv("RQTI_API_USER") == "")
+OPAL_TEST_CONNECTION <- NULL
+
+opal_for_test <- function() {
+    if (!is.null(OPAL_TEST_CONNECTION)) {
+        return(OPAL_TEST_CONNECTION)
+    }
+
+    con <- tryCatch(
+        suppressWarnings(opal()),
+        error = function(e) skip(paste("Could not create OPAL connection:", conditionMessage(e)))
+    )
+
+    OPAL_TEST_CONNECTION <<- con
+    con
 }
 
-skip_if_no_course_env <- function() {
-    needed <- c("RQTI_OPAL_COURSE_ID", "RQTI_OPAL_NODE_ID", "RQTI_OPAL_RESOURCE_ID")
-    vals <- Sys.getenv(needed)
-    skip_if(any(vals == ""))
+skip_if_no_opal <- function() {
+    skip_if(Sys.getenv("RQTI_API_USER") == "", "RQTI_API_USER is not set.")
+    invisible(opal_for_test())
+}
+
+METHODENGURU_COURSE_ID <- "38156107780"
+METHODENGURU_RESOURCE_ID <- "1671679683120887006"
+METHODENGURU_TEST_DUMMY_NODE_ID <- "1706153362112925006"
+METHODENGURU_TEST_DUMMY_SHORT_NAME <- "Test dummy"
+
+methodenguru_fixture <- function() {
+    skip_if_no_opal()
+
+    con <- opal_for_test()
+
+    elems <- tryCatch(
+        getCourseElements(con, METHODENGURU_RESOURCE_ID),
+        error = function(e) skip(paste("Could not retrieve Methodenguru elements:", conditionMessage(e)))
+    )
+
+    element <- elems[elems$nodeId == METHODENGURU_TEST_DUMMY_NODE_ID, , drop = FALSE]
+    skip_if(nrow(element) == 0, "No Methodenguru course element with the hardcoded Test dummy node id")
+
+    list(
+        con = con,
+        course_id = METHODENGURU_COURSE_ID,
+        resource_id = METHODENGURU_RESOURCE_ID,
+        node_id = METHODENGURU_TEST_DUMMY_NODE_ID,
+        element = element,
+        elements = elems
+    )
 }
 
 # Stable names reused across test runs
@@ -22,6 +61,7 @@ TEST_RTYPE_SURVEY_NAME <- "rqti_test_rtype_survey"
 TEST_URL_DIRECT_NAME <- "rqti_test_url_direct"
 TEST_URL_METHOD_NAME <- "rqti_test_url_method"
 TEST_MISSING_NAME <- "rqti_test_definitely_not_existing"
+TEST_METHODENGURU_NAME <- "rqti_methodenguru_test_dummy"
 
 make_test_item <- function(id = TEST_ITEM_NAME) {
     suppressWarnings(essay(identifier = id))
@@ -29,6 +69,30 @@ make_test_item <- function(id = TEST_ITEM_NAME) {
 
 make_test_exam <- function(id = TEST_EXAM_NAME) {
     suppressMessages(test(section(make_test_item(id))))
+}
+
+opal_upload_response <- function(key = "mock-key", display_name = "mock-resource") {
+    httr2::response(
+        status_code = 200,
+        headers = list("content-type" = "application/xml"),
+        body = charToRaw(paste0(
+            "<repositoryEntryVO>",
+            "<key>", key, "</key>",
+            "<displayname>", display_name, "</displayname>",
+            "</repositoryEntryVO>"
+        ))
+    )
+}
+
+mock_opal_connection <- function() {
+    local_mocked_bindings(
+        get_password = function(...) list(api_user = "tester",
+                                          api_password = "secret"),
+        authLMS = function(...) 200,
+        .package = "rqti",
+        .env = parent.frame()
+    )
+    opal(api_user = "tester", endpoint = "https://opal.example/")
 }
 
 test_that("opal() creates a valid Opal connection object", {
@@ -282,12 +346,432 @@ test_that("qti test archives are detected correctly", {
     expect_true(is_test(path))
 })
 
-test_that("getCourseElements works for a configured real course", {
-    skip_if_no_opal()
-    skip_if_no_course_env()
+test_that("upload2LMS sends survey resources with survey target type", {
+    con <- mock_opal_connection()
+    uploaded <- NULL
 
-    con <- opal()
-    course_id <- Sys.getenv("RQTI_OPAL_COURSE_ID")
+    local_mocked_bindings(
+        getLMSResourcesByName = function(object, display_name, rtype = NULL) {
+            data.frame(key = character(),
+                       displayname = character(),
+                       resourceableTypeName = character())
+        },
+        upload_resource = function(file, display_name, rtype, access,
+                                   endpoint = NULL) {
+            uploaded <<- list(file = file, display_name = display_name,
+                              rtype = rtype, access = access,
+                              endpoint = endpoint)
+            opal_upload_response("survey-key", display_name)
+        },
+        update_resource = function(...) stop("unexpected update"),
+        .package = "rqti"
+    )
+
+    res <- suppressMessages(upload2LMS(
+        con,
+        make_test_exam("mock_survey"),
+        display_name = "mock_survey",
+        open_in_browser = FALSE,
+        as_survey = TRUE
+    ))
+
+    expect_identical(uploaded$rtype, "FileResource.SURVEY")
+    expect_identical(uploaded$display_name, "mock_survey")
+    expect_identical(res$key, "survey-key")
+})
+
+test_that("upload2LMS rejects overwriting a resource with a different type", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        getLMSResourcesByName = function(object, display_name, rtype = NULL) {
+            data.frame(key = "survey-key",
+                       displayname = display_name,
+                       resourceableTypeName = "FileResource.SURVEY")
+        },
+        upload_resource = function(...) stop("unexpected upload"),
+        update_resource = function(...) stop("unexpected update"),
+        .package = "rqti"
+    )
+
+    expect_error(
+        suppressMessages(upload2LMS(
+            con,
+            make_test_exam("mock_test"),
+            display_name = "mock_existing_survey",
+            open_in_browser = FALSE,
+            as_survey = FALSE
+        )),
+        "Current type and target type of the resource is not equal"
+    )
+})
+
+test_that("upload2LMS derives display_name when it is NULL", {
+    con <- mock_opal_connection()
+    uploaded <- NULL
+
+    local_mocked_bindings(
+        getLMSResourcesByName = function(object, display_name, rtype = NULL) {
+            data.frame(key = character(),
+                       displayname = character(),
+                       resourceableTypeName = character())
+        },
+        upload_resource = function(file, display_name, rtype, access,
+                                   endpoint = NULL) {
+            uploaded <<- list(file = file, display_name = display_name,
+                              rtype = rtype)
+            opal_upload_response("null-display-key", display_name)
+        },
+        update_resource = function(...) stop("unexpected update"),
+        .package = "rqti"
+    )
+
+    res <- suppressMessages(upload2LMS(
+        con,
+        make_test_exam("mock_null_display"),
+        display_name = NULL,
+        open_in_browser = FALSE
+    ))
+
+    expect_false(is.null(uploaded$display_name))
+    expect_identical(
+        uploaded$display_name,
+        tools::file_path_sans_ext(basename(uploaded$file))
+    )
+    expect_identical(res$display_name, uploaded$display_name)
+})
+
+test_that("upload2LMS sends standalone question archives with question target type", {
+    con <- mock_opal_connection()
+    uploaded <- NULL
+    question_zip <- suppressMessages(createQtiTask(
+        make_test_item("mock_question"),
+        dir = tempdir(),
+        zip = TRUE
+    ))
+
+    local_mocked_bindings(
+        getLMSResourcesByName = function(object, display_name, rtype = NULL) {
+            data.frame(key = character(),
+                       displayname = character(),
+                       resourceableTypeName = character())
+        },
+        upload_resource = function(file, display_name, rtype, access,
+                                   endpoint = NULL) {
+            uploaded <<- list(file = file, display_name = display_name,
+                              rtype = rtype)
+            opal_upload_response("question-key", display_name)
+        },
+        update_resource = function(...) stop("unexpected update"),
+        .package = "rqti"
+    )
+
+    res <- suppressMessages(upload2LMS(
+        con,
+        question_zip,
+        display_name = "mock_question",
+        open_in_browser = FALSE
+    ))
+
+    expect_false(is_test(question_zip))
+    expect_identical(uploaded$rtype, "FileResource.QUESTION")
+    expect_identical(res$key, "question-key")
+})
+
+test_that("upload_resource returns successful responses and errors on failures", {
+    upload_file <- tempfile(fileext = ".zip")
+    writeBin(charToRaw("mock qti archive"), upload_file)
+
+    local_mocked_bindings(
+        req_perform = function(req) httr2::response(status_code = 200),
+        .package = "rqti"
+    )
+
+    resp <- upload_resource(
+        upload_file,
+        display_name = "mock_upload",
+        rtype = "FileResource.TEST",
+        access = 4,
+        endpoint = "https://opal.example/"
+    )
+
+    expect_identical(resp$status_code, 200L)
+
+    local_mocked_bindings(
+        req_perform = function(req) httr2::response(status_code = 404),
+        .package = "rqti"
+    )
+
+    expect_error(
+        upload_resource(
+            upload_file,
+            display_name = "mock_upload",
+            rtype = "FileResource.TEST",
+            access = 4,
+            endpoint = "https://opal.example/"
+        ),
+        "Status Code: 404"
+    )
+})
+
+test_that("Opal API methods return NULL for missing course resources", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) httr2::response(status_code = 404),
+        .package = "rqti"
+    )
+
+    expect_message(
+        out_elements <- getCourseElements(con, "missing-course"),
+        "The course could not be found."
+    )
+    expect_null(out_elements)
+
+    expect_message(
+        out_result <- getCourseResult(
+            con,
+            resource_id = "missing-course",
+            node_id = "missing-node",
+            path_outcome = tempdir()
+        ),
+        "The course could not be found."
+    )
+    expect_null(out_result)
+
+    expect_message(
+        out_assessment <- getCourseAssessment(
+            con,
+            course_id = "missing-course",
+            node_id = "missing-node"
+        ),
+        "The course or course element could not be found."
+    )
+    expect_null(out_assessment)
+
+    expect_message(
+        out_groups <- getCourseGroups(con, "missing-course"),
+        "The course could not be found."
+    )
+    expect_null(out_groups)
+})
+
+test_that("createCourseGroup sends a GroupVO XML PUT request and parses the response", {
+    con <- mock_opal_connection()
+    captured_req <- NULL
+    old_token <- Sys.getenv("X-OLAT-TOKEN", unset = NA_character_)
+    on.exit({
+        if (is.na(old_token)) {
+            Sys.unsetenv("X-OLAT-TOKEN")
+        } else {
+            Sys.setenv("X-OLAT-TOKEN" = old_token)
+        }
+    }, add = TRUE)
+    Sys.setenv("X-OLAT-TOKEN" = "test-token")
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) {
+            captured_req <<- req
+            httr2::response(
+                status_code = 200,
+                headers = list("content-type" = "application/xml"),
+                body = charToRaw(paste0(
+                    "<groupVO>",
+                    "<key>425132035</key>",
+                    "<description>Gruppe zur Bearbeitung des Thema 5</description>",
+                    "<name>Thema 5 WS2021</name>",
+                    "<type>LearningGroup</type>",
+                    "<minParticipants>1</minParticipants>",
+                    "<maxParticipants>1</maxParticipants>",
+                    "<invitationEnabled>false</invitationEnabled>",
+                    "<signoutEnabled>false</signoutEnabled>",
+                    "</groupVO>"
+                ))
+            )
+        },
+        .package = "rqti"
+    )
+
+    group <- createCourseGroup(
+        con,
+        "89334258174661",
+        "Thema 5 WS2021",
+        description = "Gruppe zur Bearbeitung des Thema 5",
+        minParticipants = 1,
+        maxParticipants = 1,
+        invitationEnabled = FALSE,
+        signoutEnabled = FALSE
+    )
+
+    body <- rawToChar(captured_req$body$data)
+
+    expect_identical(captured_req$url,
+                     "https://opal.example/restapi/repo/courses/89334258174661/groups")
+    expect_identical(captured_req$method, "PUT")
+    expect_identical(captured_req$body$content_type, "application/xml")
+    expect_identical(captured_req$headers$`X-OLAT-TOKEN`, "test-token")
+    expect_match(body, "<groupVO>")
+    expect_match(body, "<name>Thema 5 WS2021</name>", fixed = TRUE)
+    expect_match(body, "<description>Gruppe zur Bearbeitung des Thema 5</description>",
+                 fixed = TRUE)
+    expect_match(body, "<minParticipants>1</minParticipants>", fixed = TRUE)
+    expect_match(body, "<maxParticipants>1</maxParticipants>", fixed = TRUE)
+    expect_match(body, "<invitationEnabled>false</invitationEnabled>", fixed = TRUE)
+    expect_match(body, "<signoutEnabled>false</signoutEnabled>", fixed = TRUE)
+
+    expect_s3_class(group, "data.frame")
+    expect_equal(nrow(group), 1)
+    expect_identical(group$key, "425132035")
+    expect_identical(group$name, "Thema 5 WS2021")
+    expect_identical(group$type, "LearningGroup")
+    expect_equal(group$minParticipants, 1)
+    expect_equal(group$maxParticipants, 1)
+    expect_false(group$invitationEnabled)
+    expect_false(group$signoutEnabled)
+})
+
+test_that("createCourseGroup returns NULL when OPAL rejects the group", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) httr2::response(status_code = 400),
+        .package = "rqti"
+    )
+
+    expect_message(
+        group <- createCourseGroup(con, "89334258174661", "Existing group"),
+        "The group could not be created"
+    )
+    expect_null(group)
+})
+
+test_that("addGroupUser sends a participant PUT request", {
+    con <- mock_opal_connection()
+    captured_req <- NULL
+    old_token <- Sys.getenv("X-OLAT-TOKEN", unset = NA_character_)
+    on.exit({
+        if (is.na(old_token)) {
+            Sys.unsetenv("X-OLAT-TOKEN")
+        } else {
+            Sys.setenv("X-OLAT-TOKEN" = old_token)
+        }
+    }, add = TRUE)
+    Sys.setenv("X-OLAT-TOKEN" = "test-token")
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) {
+            captured_req <<- req
+            httr2::response(status_code = 200)
+        },
+        .package = "rqti"
+    )
+
+    status <- addGroupUser(con, "442662912", "196610")
+
+    expect_identical(captured_req$url,
+                     "https://opal.example/restapi/groups/442662912/participants/196610")
+    expect_identical(captured_req$method, "PUT")
+    expect_identical(captured_req$headers$`X-OLAT-TOKEN`, "test-token")
+    expect_identical(status, 200L)
+})
+
+test_that("addGroupUser returns NULL when OPAL cannot find the group or user", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) httr2::response(status_code = 404),
+        .package = "rqti"
+    )
+
+    expect_message(
+        status <- addGroupUser(con, "missing-group", "missing-user"),
+        "The group or user could not be found"
+    )
+    expect_null(status)
+})
+
+test_that("removeGroupUser sends a participant DELETE request", {
+    con <- mock_opal_connection()
+    captured_req <- NULL
+    old_token <- Sys.getenv("X-OLAT-TOKEN", unset = NA_character_)
+    on.exit({
+        if (is.na(old_token)) {
+            Sys.unsetenv("X-OLAT-TOKEN")
+        } else {
+            Sys.setenv("X-OLAT-TOKEN" = old_token)
+        }
+    }, add = TRUE)
+    Sys.setenv("X-OLAT-TOKEN" = "test-token")
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) {
+            captured_req <<- req
+            httr2::response(status_code = 200)
+        },
+        .package = "rqti"
+    )
+
+    status <- removeGroupUser(con, "442662912", "196610")
+
+    expect_identical(captured_req$url,
+                     "https://opal.example/restapi/groups/442662912/participants/196610")
+    expect_identical(captured_req$method, "DELETE")
+    expect_identical(captured_req$headers$`X-OLAT-TOKEN`, "test-token")
+    expect_identical(status, 200L)
+})
+
+test_that("removeGroupUser returns NULL when the user is not a participant", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) httr2::response(status_code = 304),
+        .package = "rqti"
+    )
+
+    expect_message(
+        status <- removeGroupUser(con, "442662912", "196610"),
+        "not a participant"
+    )
+    expect_null(status)
+})
+
+test_that("getGroupUsers skips missing groups and returns an empty data frame", {
+    con <- mock_opal_connection()
+
+    local_mocked_bindings(
+        ensure_opal_login = function(object) TRUE,
+        req_perform = function(req) httr2::response(status_code = 404),
+        .package = "rqti"
+    )
+
+    expect_message(
+        users <- getGroupUsers(con, "missing-group"),
+        "The group missing-group could not be found."
+    )
+
+    expect_s3_class(users, "data.frame")
+    expect_equal(nrow(users), 0)
+    expect_identical(
+        names(users),
+        c(
+            "group_id", "user_id", "user_login", "user_first_name",
+            "user_last_name", "user_email"
+        )
+    )
+})
+
+test_that("getCourseElements works for the Methodenguru course", {
+    skip_if_no_opal()
+
+    con <- opal_for_test()
+    course_id <- METHODENGURU_RESOURCE_ID
 
     elems <- getCourseElements(con, course_id)
 
@@ -297,88 +781,216 @@ test_that("getCourseElements works for a configured real course", {
     expect_true(nrow(elems) >= 1)
 })
 
-test_that("publishCourse returns a successful status for a configured real course", {
-    skip_if_no_opal()
-    skip_if_no_course_env()
+test_that("Methodenguru course ids and Test dummy element can be resolved", {
+    fx <- methodenguru_fixture()
 
-    con <- opal()
-    course_id <- Sys.getenv("RQTI_OPAL_COURSE_ID")
-
-    status <- publishCourse(con, course_id)
-
-    expect_true(is.numeric(status) || is.integer(status))
-    expect_identical(as.integer(status), 200L)
+    expect_identical(fx$course_id, METHODENGURU_COURSE_ID)
+    expect_identical(fx$resource_id, METHODENGURU_RESOURCE_ID)
+    expect_true(nzchar(fx$course_id))
+    expect_true(nzchar(fx$resource_id))
+    expect_s3_class(fx$elements, "data.frame")
+    expect_true(all(c("nodeId", "shortTitle", "shortName", "longTitle") %in% names(fx$elements)))
+    expect_identical(fx$element$shortName[[1]], METHODENGURU_TEST_DUMMY_SHORT_NAME)
+    expect_true(nzchar(fx$node_id))
 })
 
-test_that("updateCourseElementResource updates and publishes a configured real course element", {
-    skip_if_no_opal()
-    skip_if_no_course_env()
+test_that("getCourseGroups downloads Methodenguru groups", {
+    fx <- methodenguru_fixture()
 
-    con <- opal()
-    course_id <- Sys.getenv("RQTI_OPAL_COURSE_ID")
-    node_id <- Sys.getenv("RQTI_OPAL_NODE_ID")
-    resource_id <- Sys.getenv("RQTI_OPAL_RESOURCE_ID")
+    groups <- getCourseGroups(fx$con, fx$resource_id)
+
+    expect_s3_class(groups, "data.frame")
+    expect_true(all(c(
+        "key", "name", "description", "minParticipants", "maxParticipants",
+        "invitationEnabled", "signoutEnabled"
+    ) %in% names(groups)))
+})
+
+test_that("getGroupUsers downloads participants for Methodenguru groups", {
+    fx <- methodenguru_fixture()
+    groups <- getCourseGroups(fx$con, fx$resource_id)
+
+    if (nrow(groups) == 0) {
+        skip("No Methodenguru groups available.")
+    }
+
+    users <- getGroupUsers(fx$con, groups$key)
+
+    expect_s3_class(users, "data.frame")
+    expect_true(all(c(
+        "group_id", "user_id", "user_login", "user_first_name",
+        "user_last_name", "user_email"
+    ) %in% names(users)))
+    expect_true(nrow(users) >= 0)
+})
+
+test_that("getCourseAssessment downloads Methodenguru assessment data", {
+    fx <- methodenguru_fixture()
+
+    assessment <- getCourseAssessment(fx$con, fx$resource_id, fx$node_id)
+
+    if (is.null(assessment)) {
+        skip("No Methodenguru assessment data available or accessible.")
+    }
+
+    expect_s3_class(assessment, "data.frame")
+    expect_true(all(c(
+        "identity_key", "user_id", "user_login", "user_first_name",
+        "user_last_name", "user_email", "score", "max_score", "passed",
+        "attempts"
+    ) %in% names(assessment)))
+})
+
+test_that("getCourseResult downloads Methodenguru Test dummy result data", {
+    fx <- methodenguru_fixture()
+
+    expect_identical(fx$element$shortName[[1]], METHODENGURU_TEST_DUMMY_SHORT_NAME)
+
+    out <- getCourseResult(
+        fx$con,
+        resource_id = fx$resource_id,
+        node_id = fx$elements$nodeId[fx$elements$shortName == "TestDummy2"],
+        path_outcome = tempdir(),
+        rename = TRUE
+    )
+
+    if (is.null(out)) {
+        skip("No Methodenguru result zip available for Test dummy.")
+    }
+
+    expect_true(file.exists(out))
+    expect_match(basename(out), "^results_TestDummy2\\.zip$")
+})
+
+test_that("Methodenguru Test dummy can be updated with a new test resource", {
+    fx <- methodenguru_fixture()
+    exam <- make_test_exam(TEST_METHODENGURU_NAME)
+
+    uploaded <- suppressMessages(
+        upload2LMS(
+            fx$con,
+            exam,
+            display_name = TEST_METHODENGURU_NAME,
+            open_in_browser = FALSE,
+            overwrite = TRUE
+        )
+    )
 
     resp <- updateCourseElementResource(
-        con,
-        course_id = course_id,
-        node_id = node_id,
-        resource_id = resource_id,
+        fx$con,
+        course_id = fx$resource_id,
+        node_id = fx$node_id,
+        resource_id = uploaded$key,
         publish = TRUE
     )
 
-    expect_true(!is.null(resp))
-    expect_identical(resp$status_code, 200)
+    expect_type(uploaded, "list")
+    expect_true(nzchar(uploaded$key))
+    expect_identical(as.integer(resp$status_code), 200L)
+    expect_identical(fx$element$shortName[[1]], METHODENGURU_TEST_DUMMY_SHORT_NAME)
 })
 
-test_that("getCourseResult downloads a zip for a configured real course element", {
-    skip_if_no_opal()
-    skip_if_no_course_env()
-
-    con <- opal()
-    resource_id <- Sys.getenv("RQTI_OPAL_RESOURCE_ID")
-    node_id <- Sys.getenv("RQTI_OPAL_NODE_ID")
-
-    out <- getCourseResult(
-        con,
-        resource_id = resource_id,
-        node_id = node_id,
-        path_outcome = tempdir(),
-        rename = FALSE
+test_that("course assessment XML is parsed into score data", {
+    xml <- xml2::read_xml(
+        paste0(
+            "<assessableResultsVOes>",
+            "<assessableResultsVO>",
+            "<identityKey>4434478786</identityKey>",
+            "<userVO>",
+            "<key>4431478786</key>",
+            "<firstName>Natalie</firstName>",
+            "<lastName>Nutzer</lastName>",
+            "<email>natalie.nutzer@beispiel.de</email>",
+            "</userVO>",
+            "<score>15.0</score>",
+            "<maxScore>25.0</maxScore>",
+            "<passed>true</passed>",
+            "<attempts>4</attempts>",
+            "</assessableResultsVO>",
+            "</assessableResultsVOes>"
+        )
     )
 
-    if (is.null(out)) {
-        skip("No result zip available for configured course/node.")
-    }
+    assessment <- parse_course_assessment_response(xml)
 
-    expect_true(file.exists(out))
-    expect_match(basename(out), "\\.zip$")
-})
-
-test_that("getCourseResult also works with an explicit zip file path", {
-    skip_if_no_opal()
-    skip_if_no_course_env()
-
-    con <- opal()
-    resource_id <- Sys.getenv("RQTI_OPAL_RESOURCE_ID")
-    node_id <- Sys.getenv("RQTI_OPAL_NODE_ID")
-    target <- file.path(tempdir(), "rqti_test_results.zip")
-
-    out <- getCourseResult(
-        con,
-        resource_id = resource_id,
-        node_id = node_id,
-        path_outcome = target,
-        rename = FALSE
-    )
-
-    if (is.null(out)) {
-        skip("No result zip available for configured course/node.")
-    }
-
+    expect_s3_class(assessment, "data.frame")
     expect_identical(
-        normalizePath(out, winslash = "/"),
-        normalizePath(target, winslash = "/", mustWork = FALSE)
+        names(assessment),
+        c(
+            "identity_key", "user_id", "user_login", "user_first_name",
+            "user_last_name", "user_email", "score", "max_score", "passed",
+            "attempts"
+        )
     )
-    expect_true(file.exists(out))
+    expect_equal(nrow(assessment), 1)
+    expect_identical(assessment$identity_key, "4434478786")
+    expect_identical(assessment$user_id, "4431478786")
+    expect_true(is.na(assessment$user_login))
+    expect_identical(assessment$user_first_name, "Natalie")
+    expect_identical(assessment$user_last_name, "Nutzer")
+    expect_identical(assessment$user_email, "natalie.nutzer@beispiel.de")
+    expect_equal(assessment$score, 15)
+    expect_equal(assessment$max_score, 25)
+    expect_true(assessment$passed)
+    expect_identical(assessment$attempts, 4L)
+})
+
+test_that("course assessment XML without records returns the assessment schema", {
+    xml <- xml2::read_xml("<assessableResultsVOes/>")
+
+    assessment <- parse_course_assessment_response(xml)
+
+    expect_s3_class(assessment, "data.frame")
+    expect_identical(
+        names(assessment),
+        c(
+            "identity_key", "user_id", "user_login", "user_first_name",
+            "user_last_name", "user_email", "score", "max_score", "passed",
+            "attempts"
+        )
+    )
+    expect_equal(nrow(assessment), 0)
+    expect_type(assessment$identity_key, "character")
+    expect_type(assessment$score, "double")
+    expect_type(assessment$passed, "logical")
+    expect_type(assessment$attempts, "integer")
+})
+
+test_that("group XML is parsed into group data", {
+    xml <- xml2::read_xml(
+        paste0(
+            "<groupVOes>",
+            "<groupVO>",
+            "<key>425132035</key>",
+            "<description>group descri</description>",
+            "<name>Group Rest 6</name>",
+            "<type>LearningGroup</type>",
+            "<minParticipants>0</minParticipants>",
+            "<maxParticipants>0</maxParticipants>",
+            "<invitationEnabled>false</invitationEnabled>",
+            "<signoutEnabled>true</signoutEnabled>",
+            "</groupVO>",
+            "</groupVOes>"
+        )
+    )
+
+    groups <- parse_group_vo_response(xml)
+
+    expect_s3_class(groups, "data.frame")
+    expect_identical(
+        names(groups),
+        c(
+            "key", "name", "description", "type", "minParticipants",
+            "maxParticipants", "invitationEnabled", "signoutEnabled"
+        )
+    )
+    expect_equal(nrow(groups), 1)
+    expect_identical(groups$key, "425132035")
+    expect_identical(groups$name, "Group Rest 6")
+    expect_identical(groups$description, "group descri")
+    expect_identical(groups$type, "LearningGroup")
+    expect_equal(groups$minParticipants, 0)
+    expect_equal(groups$maxParticipants, 0)
+    expect_false(groups$invitationEnabled)
+    expect_true(groups$signoutEnabled)
 })

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE assessmentItem>
+<assessmentItem xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1.xsd" identifier="dd_task" title="dd_task" adaptive="false" timeDependent="false">
+  <responseDeclaration identifier="response_1" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OptionA</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="OptionA" mappedValue="1"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="first" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OptionA</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="OptionA" mappedValue="1"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="second" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OptionA</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="OptionA" mappedValue="1"/>
+    </mapping>
+  </responseDeclaration>
+  <responseDeclaration identifier="response_4" cardinality="single" baseType="identifier">
+    <correctResponse>
+      <value>OptionA</value>
+    </correctResponse>
+    <mapping>
+      <mapEntry mapKey="OptionA" mappedValue="1"/>
+    </mapping>
+  </responseDeclaration>
+  <outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>4</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_response_1" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_response_1" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_response_1" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_first" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_first" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_first" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_second" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_second" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_second" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="SCORE_response_4" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MAXSCORE_response_4" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>1</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="MINSCORE_response_4" cardinality="single" baseType="float">
+    <defaultValue>
+      <value>0</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="FEEDBACKBASIC" cardinality="single" baseType="identifier">
+    <defaultValue>
+      <value>empty</value>
+    </defaultValue>
+  </outcomeDeclaration>
+  <outcomeDeclaration identifier="FEEDBACKMODAL" cardinality="multiple" baseType="identifier"/>
+  <itemBody>
+    <div>
+      <p>The philosophy of the rqti package is 
+      <inlineChoiceInteraction responseIdentifier="response_1" shuffle="true"><inlineChoice identifier="OptionA">do one thing and do it well</inlineChoice><inlineChoice identifier="OptionB">one for all</inlineChoice></inlineChoiceInteraction>
+      .</p>
+      <pre class="r">
+        <code>plot(1:10, 1:10)</code>
+      </pre>
+      <p>
+        <img src="data:image/png;base64,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BRQQ8AUcVF0iQIAAAQIC3jFAgAABAgQKKCDgCzioukSAAAECBAS8Y4AAAQIECBRQQMAXcFB1iQABAgQICHjHAAECBAgQKKCAgC/goOoSAQIECBAQ8I4BAgQIECBQQAEBX8BB1SUCBAgQICDgHQMECBAgQKCAAgK+gIOqSwQIECBAQMA7BggQIECAQAEFBHwBB1WXCBAgQIBAQ2siuO+++2LNmjWtqcv6SoAAAQIZCuy6667xta99LZMWtFn35ymTmmtc6f333x/XXnttjBgxosY1q44AAQIEWqvADTfcEJMnT44DDjig5gSt5gw+OXMfPnx4nHXWWTVHViEBAgQItE6BV155JdauXZtJ592Dz4RdpQQIECBAIF0BAZ+ur9IJECBAgEAmAgI+E3aVEiBAgACBdAUEfLq+SidAgAABApkICPhM2FVKgAABAgTSFchdwCfvdl+6dGm6vVY6AQIECBAouEAuAr6xsTEuvvji6N27d7Rr1y523nnn6NSpU+y7774xadKkgg+B7hEgQIAAgeoL5OJz8GPGjIkFCxbEtGnTok+fPqVwX758ebz44otx3nnnxcqVK2P06NHV770SCRAgQIBAQQVycQY/Y8aMuOWWW2L//fePzp07R5s2baJr165xyCGHxPXXXx9Tp04tKL9uESBAgECeBX7729/Ggw8+GC+88EKem1mxbbkI+ORS/KOPPlqxgQ899FB079694joLCRAgQIBAWgIXXHBB3HrrrfHqq6/G0UcfHTfddFNaVaVSbi4u0V922WXxne98JyZMmBB9+/aNLl26xPvvvx8vvfRS6Z/DTJ8+PZXOK5QAAQIECFQSuO2220pfMdv0PrDkNvHQoUNL3yk/aNCgSrvkblkuAn7AgAHxzDPPxBNPPBHz5s0r3Y9PztoT0MGDB5cu2W+NXHIZZebMmRU3nTNnTuyxxx5x9tlnV1xvIQECBAgQaBJ4/PHH46KLLmqaje233z6S94slywX8epate9KhQ4c4/PDDt27jTWx18MEHl96kV2n1+PHj48MPP6y0yjICBAgQIFAmkAT6okWLon///uuXz58/vxT06xfk/EkuzuCrZbTbbrtF8lNp6tatm/8FXwnGMgIECBDYSOC73/1u6VNcEydOjL333rv0Zu/kU13J7eN6mXIR8Mn/aV+9evUmzZJXUCeeeOIm11tBgAABAgSq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" alt="xxx"/>
+        <img src="images/sign.png" alt="Tux, the Linux mascot"/>
+      </p>
+      <p>Under the hood, <br/>the style <span>rqti</span> package uses 
+      <inlineChoiceInteraction responseIdentifier="first" shuffle="true"><inlineChoice identifier="OptionA">S4 OOP</inlineChoice><inlineChoice identifier="OptionB">S3 OOP</inlineChoice><inlineChoice identifier="OptionC">no OOP</inlineChoice><inlineChoice identifier="OptionD">R6 OOP</inlineChoice></inlineChoiceInteraction>
+      <inlineChoiceInteraction responseIdentifier="second" shuffle="true"><inlineChoice identifier="OptionA">S4 OOP</inlineChoice><inlineChoice identifier="OptionB">S3 OOP</inlineChoice><inlineChoice identifier="OptionC">no OOP</inlineChoice><inlineChoice identifier="OptionD">R6 OOP</inlineChoice></inlineChoiceInteraction>
+      .</p>
+      <p>new 
+      <inlineChoiceInteraction responseIdentifier="response_4" shuffle="true"><inlineChoice identifier="OptionA">2fdf,dfd.dfd</inlineChoice><inlineChoice identifier="OptionB">fdf7/dfd dfddddddddffffgfrgrgrfgfr fgferfefewf efefewfe errfe erer</inlineChoice></inlineChoiceInteraction>
+      </p>
+    </div>
+  </itemBody>
+  <responseProcessing>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="response_1"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_response_1">
+          <mapResponse identifier="response_1"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="first"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_first">
+          <mapResponse identifier="first"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="second"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_second">
+          <mapResponse identifier="second"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <not>
+          <isNull>
+            <variable identifier="response_4"/>
+          </isNull>
+        </not>
+        <setOutcomeValue identifier="SCORE_response_4">
+          <mapResponse identifier="response_4"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <setOutcomeValue identifier="SCORE">
+      <sum>
+        <variable identifier="SCORE_response_1"/>
+        <variable identifier="SCORE_first"/>
+        <variable identifier="SCORE_second"/>
+        <variable identifier="SCORE_response_4"/>
+      </sum>
+    </setOutcomeValue>
+    <responseCondition>
+      <responseIf>
+        <gt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MAXSCORE"/>
+        </gt>
+        <setOutcomeValue identifier="SCORE">
+          <variable identifier="MAXSCORE"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <lt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MINSCORE"/>
+        </lt>
+        <setOutcomeValue identifier="SCORE">
+          <variable identifier="MINSCORE"/>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <and>
+          <isNull>
+            <variable identifier="response_1"/>
+          </isNull>
+          <isNull>
+            <variable identifier="first"/>
+          </isNull>
+          <isNull>
+            <variable identifier="second"/>
+          </isNull>
+          <isNull>
+            <variable identifier="response_4"/>
+          </isNull>
+        </and>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">empty</baseValue>
+        </setOutcomeValue>
+      </responseIf>
+      <responseElseIf>
+        <lt>
+          <variable identifier="SCORE"/>
+          <variable identifier="MAXSCORE"/>
+        </lt>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">incorrect</baseValue>
+        </setOutcomeValue>
+      </responseElseIf>
+      <responseElse>
+        <setOutcomeValue identifier="FEEDBACKBASIC">
+          <baseValue baseType="identifier">correct</baseValue>
+        </setOutcomeValue>
+      </responseElse>
+    </responseCondition>
+    <responseCondition>
+      <responseIf>
+        <and>
+          <gte>
+            <variable identifier="SCORE"/>
+            <baseValue baseType="float">0</baseValue>
+          </gte>
+        </and>
+        <setOutcomeValue identifier="FEEDBACKMODAL">
+          <multiple>
+            <variable identifier="FEEDBACKMODAL"/>
+            <baseValue baseType="identifier">modal_feedback</baseValue>
+          </multiple>
+        </setOutcomeValue>
+      </responseIf>
+    </responseCondition>
+  </responseProcessing>
+  <modalFeedback identifier="modal_feedback" outcomeIdentifier="FEEDBACKMODAL" showHide="show">
+    <p>The package <code>rqti</code> is specialized for producing xml rqti files so “do one thing and do it well” is more appropriate. Under the hood we use S4 OOP.</p>
+  </modalFeedback>
+</assessmentItem>

@@ -14,7 +14,7 @@
 #'   input field in the content delivery engine.
 #' @param placeholder A character string, optional; places helpful text in the
 #'   text input field in the content delivery engine.
-#' @return A character string mapped as yaml.
+#' @return A character string mapped as YAML.
 #' @examples
 #' gap_text(c("Solution", "Solutions"), tolerance = 2)
 #'
@@ -34,25 +34,25 @@ gap_text <- function(solution, tolerance = NULL, case_sensitive = FALSE,
 
 #' Create YAML string for NumericGap object
 #'
-#' @param solution A numeric value; contains right answer for this numeric
+#' @param solution A numeric value; contains the correct answer for this numeric
 #'   entry.
-#' @param tolerance A numeric value, optional; specifies the value for up and
-#'   low boundaries of tolerance rate for candidate answer. Default is 0.
+#' @param tolerance A numeric value, optional; specifies the upper and lower
+#'   boundaries of the tolerance range for the candidate's answer. Default is 0.
 #' @param tolerance_type A character string, optional; specifies tolerance mode;
 #'   possible values:"exact", "absolute" (by default), "relative".
 #' @param points A numeric value, optional; the number of points for this gap.
 #'   Default is 1.
 #' @param response_identifier A character string, optional; an identifier for
 #'   the answer.
-#' @param include_lower_bound A boolean, optional; specifies whether or not the
-#'   lower bound is included in tolerance rate.
-#' @param include_upper_bound A boolean, optional; specifies whether or not the
-#'   upper bound is included in tolerance rate.
-#' @param expected_length An integer value, optional; is responsible to set a
-#'   size of text input field in content delivery engine.
-#' @param placeholder A character string, optional; is responsible to place some
-#'   helpful text in text input field in content delivery engine.
-#' @return A character string mapped as yaml.
+#' @param include_lower_bound A boolean, optional; specifies whether the
+#'   lower bound is included in the tolerance range.
+#' @param include_upper_bound A boolean, optional; specifies whether the
+#'   upper bound is included in the tolerance range.
+#' @param expected_length An integer value, optional; sets the size of the text
+#'   input field in the content delivery engine.
+#' @param placeholder A character string, optional; places helpful text in the
+#'   text input field in the content delivery engine.
+#' @return A character string mapped as YAML.
 #' @examples
 #' gap_numeric(5.0, tolerance = 10, tolerance_type = "relative")
 #'
@@ -72,18 +72,18 @@ gap_numeric <- function(solution, tolerance = 0, tolerance_type = "absolute",
 
 #' Create YAML string for InlineChoice object (dropdown list)
 #'
-#' @param choices A numeric or character vector; contains values of possible
+#' @param choices A numeric or character vector; contains the possible
 #'   answers. If you use a named vector, the names will be used as identifiers.
 #' @param solution_index An integer value, optional; the number of right answer
 #'   in the `choices` vector. Default is `1`.
 #' @param points A numeric value, optional; the number of points for this gap.
 #'   Default is `1`.
-#' @param shuffle A boolean, optional; is responsible to randomize the order in
+#' @param shuffle A boolean, optional; determines whether to randomize the order in
 #'   which the choices are initially presented to the candidate. Default is
 #'   `TRUE`.
 #' @param response_identifier A character string, optional; an identifier for
 #'   the answer.
-#' @return A character string mapped as yaml.
+#' @return A character string mapped as YAML.
 #' @seealso [gap_text()], [gap_numeric()], [mdlist()]
 #' @examples
 #' dropdown(c("Option A", "Option B"), response_identifier = "task_dd_list")
@@ -100,39 +100,65 @@ dropdown <- function(choices, solution_index = 1, points = 1, shuffle = TRUE,
     return(result)
 }
 
-clean_yaml_str <- function(params, solution, type){
+
+clean_yaml_str <- function(params, solution, type) {
     x <- c(params, list(type = type))
+
+    clean_text <- function(v) {
+        v <- as.character(v)
+        v <- gsub("\r|\n", " ", v)
+        v <- gsub("\\s+", " ", v)
+        trimws(v)
+    }
+
+    quote_yaml <- function(v) {
+        v <- clean_text(v)
+
+        # In YAML single-quoted strings, an apostrophe is escaped as ''
+        v <- gsub("'", "''", v, fixed = TRUE)
+
+        paste0("'", v, "'")
+    }
 
     fmt_value <- function(v) {
         if (length(v) > 1) {
-            v <- as.character(v)
-            v <- gsub("'", "", v, fixed = TRUE)
-            v <- trimws(v)
-            return(paste0("[", paste(v, collapse = ","), "]"))
+            if (is.character(v)) {
+                values <- vapply(v, quote_yaml, character(1))
+            } else if (is.logical(v)) {
+                values <- ifelse(v, "true", "false")
+            } else {
+                values <- as.character(v)
+            }
+
+            return(paste0("[", paste(values, collapse = ", "), "]"))
         }
 
         if (is.logical(v)) {
-            return(ifelse(isTRUE(v), "yes", "no"))
+            return(if (isTRUE(v)) "true" else "false")
         }
 
         if (is.numeric(v)) {
             return(as.character(v))
         }
 
-        v <- as.character(v)
-        v <- gsub("\r|\n", " ", v)
-        v <- gsub("\\s+", " ", v)
-        v <- gsub("'", "", v, fixed = TRUE)
-        trimws(v)
+        quote_yaml(v)
     }
+
     parts <- mapply(
-        FUN = function(k, v) paste0(k, ": ", fmt_value(v)),
+        FUN = function(k, v) {
+            paste0(k, ": ", fmt_value(v))
+        },
         k = names(x),
         v = x,
         SIMPLIFY = TRUE,
         USE.NAMES = FALSE
     )
-    return(paste0("<gap>{", paste(parts, collapse = ", "), "}</gap>"))
+
+    paste0(
+        "<gap>{",
+        paste(parts, collapse = ", "),
+        "}</gap>"
+    )
 }
 
 
@@ -285,4 +311,124 @@ html_escape <- function(x) {
     x <- gsub(">", "&gt;", x, fixed = TRUE)
     x <- gsub('"', "&quot;", x, fixed = TRUE)
     x
+}
+
+
+#' Embed an audio file directly into HTML/XML using Base64 encoding
+#'
+#' Designed for inline use in R Markdown, e.g.
+#' `` `r provide_audio("media/klammer.wav")` ``.
+#'
+#' The function reads a local audio file, encodes it as Base64,
+#' and returns either:
+#' - an HTML \code{<object>} tag
+#' - or an HTML \code{<audio>} tag
+#'
+#' This makes the final XML/HTML fully self-contained.
+#'
+#' @param path Path to the local audio file.
+#' @param mime MIME type. If NULL, it is guessed from the extension.
+#' @param method Rendering method:
+#'   - "object" (default)
+#'   - "audio"
+#' @param warn_size_mb Warn if file is larger than this many MB.
+#'
+#' @importFrom base64enc base64encode
+#'
+#' @return knitr_asis object containing embedded audio HTML.
+#' @export
+provide_audio <- function(path,
+                          mime = NULL,
+                          method = c("object", "audio"),
+                          warn_size_mb = 5) {
+
+    method <- match.arg(method)
+
+    if (!is.character(path) || length(path) != 1 || !nzchar(path)) {
+        stop("`path` must be a non-empty character string.", call. = FALSE)
+    }
+
+    if (!file.exists(path)) {
+        stop("File does not exist: ", path, call. = FALSE)
+    }
+
+    size <- file.info(path)$size
+
+    if (!is.null(warn_size_mb)) {
+
+        size_mb <- size / 1024^2
+
+        if (is.finite(size_mb) && size_mb > warn_size_mb) {
+
+            warning(
+                sprintf(
+                    paste0(
+                        "Audio file '%s' is %.2f MB. ",
+                        "Embedding it will increase the size ",
+                        "of the generated XML/HTML."
+                    ),
+                    basename(path),
+                    size_mb
+                ),
+                call. = FALSE
+            )
+
+        }
+
+    }
+
+    if (is.null(mime)) {
+
+        ext <- tolower(tools::file_ext(path))
+
+        mime <- switch(
+            ext,
+            wav  = "audio/wav",
+            mp3  = "audio/mpeg",
+            ogg  = "audio/ogg",
+            m4a  = "audio/mp4",
+            flac = "audio/flac",
+            stop("Unsupported audio format: ", ext, call. = FALSE)
+        )
+
+    }
+
+    raw <- readBin(path, "raw", n = size)
+
+    encoded <- base64enc::base64encode(raw)
+
+    src <- paste0(
+        "data:",
+        mime,
+        ";base64,",
+        encoded
+    )
+
+    if (method == "object") {
+
+        html <- paste0(
+            '<object data="',
+            html_escape(src),
+            '" type="',
+            html_escape(mime),
+            '" />'
+        )
+
+    } else {
+
+        html <- paste0(
+            '<audio controls="controls">',
+            '<source src="',
+            html_escape(src),
+            '" type="',
+            html_escape(mime),
+            '" />',
+            'Your browser does not support the audio file.',
+            '</audio>'
+        )
+
+    }
+
+    knitr::asis_output(html)
+
 }

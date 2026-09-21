@@ -5,10 +5,10 @@
 #' @param object an instance of the [AssessmentTest] S4 object
 #' @param path string, optional; a path to folder to store zip file with
 #'   possible file name; working directory by default
-#' @param verification boolean, optional; to check validity of xml file, default
-#'   `FALSE`
-#' @param zip_only boolean, optional; returns only zip file in case of TRUE or
-#'   zip, xml and downloads files in case of FALSE value
+#' @param verification boolean, optional; checks the validity of the XML file.
+#'   Default is `FALSE`.
+#' @param zip_only boolean, optional; if TRUE, returns only the zip file. If
+#'   FALSE, returns the zip, XML, and download files.
 #' @return xml document.
 create_qti_test <- function(object, path = ".", verification = FALSE,
                             zip_only = FALSE) {
@@ -45,6 +45,7 @@ create_qti_test <- function(object, path = ".", verification = FALSE,
     }
 
     if (length(object@stylesheet_path) != 0) {
+        dir.create(file.path(tdir, "styles"), showWarnings = FALSE)
         file.copy(from = object@stylesheet_path,
                   to = file.path(tdir, "styles",
                                  basename(object@stylesheet_path)))
@@ -218,18 +219,33 @@ create_manifest <- function(object) {
 
     file_name <- paste0(object@identifier, ".xml")
     file <-  tag("file", list(href = file_name))
+    stylesheet_files <- create_stylesheet_file_tags(object)
     items <- unlist(Map(getAssessmentItems, object@section, USE.NAMES = FALSE))
     dependencies <- Map(create_dependency, names(items))
     test_resource <- tag("resource", list(identifier = object@identifier,
                                           type = "imsqti_test_xmlv2p1",
                                           href = paste0(object@identifier,
                                                         ".xml"),
-                                          file, metadata,
+                                          file, stylesheet_files, metadata,
                                           dependencies))
     item_resources <- Map(create_resource_item, names(items), items)
     resources <- tag("resources", list(test_resource, item_resources))
 
     tagAppendChildren(manifest, organizations, resources)
+}
+
+create_stylesheet_file_tags <- function(object) {
+    hrefs <- character()
+
+    if (!is.null(object@academic_grading)) {
+        hrefs <- c(hrefs, "styles/rqti.css")
+    }
+
+    if (length(object@stylesheet_path) != 0) {
+        hrefs <- c(hrefs, file.path("styles", basename(object@stylesheet_path)))
+    }
+
+    Map(function(href) tag("file", list(href = href)), unique(hrefs))
 }
 
 # create tag 'dependency' for minifest file

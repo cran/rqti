@@ -22,6 +22,8 @@ assessmentTestOpal(
   calculator = NA_character_,
   mark_items = TRUE,
   keep_responses = FALSE,
+  files = character(),
+  stylesheet_path = NULL,
   metadata = qtiMetadata(),
   points = NA_real_
 )
@@ -84,26 +86,36 @@ options is possible:
 - 'individual': Submit candidates' responses on an item-by-item basis; used by default.
 - 'simultaneous': Candidates' responses are submitted all together by the end of the test.}
 
-\item{allow_comment}{A boolean, optional, enabling the candidate to leave
-comments in each question. Default is \code{TRUE.}}
+\item{allow_comment}{A boolean, optional, allowing the candidate to leave
+comments on each question. Default is \code{TRUE}.}
 
 \item{rebuild_variables}{A boolean, optional, enabling the recalculation of
 variables and reshuffling the order of choices for each item-attempt.
 Default is \code{TRUE}.}
 
 \item{show_test_time}{A boolean, optional, determining whether to show
-candidate elapsed processing time without a time limit. Default is \code{TRUE}.}
+the candidate's elapsed processing time without a time limit. Default is \code{TRUE}.}
 
 \item{calculator}{A character value, optional, determining whether to show a
 calculator to the candidate. Possible values:
 - "simple"
 - "scientific".}
 
-\item{mark_items}{A boolean, optional, determining whether to allow candidate
-marking of questions. Default is \code{TRUE}.}
+\item{mark_items}{A boolean, optional, determining whether to allow
+candidates to mark questions. Default is \code{TRUE}.}
 
 \item{keep_responses}{A boolean, optional, determining whether to save the
-candidate's answers from the previous attempt. Default is \code{FALSE}.}
+the candidate's answers from the previous attempt. Default is \code{FALSE}.}
+
+\item{files}{A character vector, optional; paths to files that will be
+available for download in OPAL.}
+
+\item{stylesheet_path}{A character value, optional, specifying the path to a
+custom CSS stylesheet. If provided, the stylesheet is included at the
+assessment test level and applied during rendering. When
+\code{academic_grading} is set, the default stylesheet
+\code{styles/rqti.css} is included automatically; a user-defined stylesheet
+is added in addition and may override default styles.}
 
 \item{metadata}{An object of class \link{QtiMetadata} that holds metadata
 information about the test. By default it creates \link{QtiMetadata} object. See

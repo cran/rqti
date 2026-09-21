@@ -1,3 +1,39 @@
+# rqti 1.3.0
+
+## New features
+
+* Added `read_qti()` as an alias for `extract_results()`.
+
+* Added OPAL API functions `createCourseGroup()` for creating course groups,
+  `addGroupUser()` for adding users to groups, and `removeGroupUser()` for
+  removing users from groups.
+
+* `extract_results(level = "item")` now includes task-level
+  `candidate_comment` and `scorer_comment` columns for each item row.
+
+* Added `provide_audio()` helper to embed local audio files directly into
+  QTI/HTML content using Base64 encoding. The function supports both
+  `<object>` and `<audio>` rendering methods and
+  self-contained audio embedding for portable assessment items.
+  
+## Improvements
+
+* Changed the preferred R Markdown YAML configuration for `preview_feedback`. 
+The option should now be specified as a top-level YAML field instead of inside 
+`params`. The previous syntax within `params` is deprecated and will be removed 
+in a future release.
+  
+## Bug fixes
+
+* Dropdown items (dropdown()) can now include commas and other punctuation 
+without breaking YAML parsing.
+
+* Updated OPAL authentication to use the current REST login endpoint and
+  header-based credentials.
+  
+* Fixed grade feedback score ranges so that rounding to two decimal places no
+  longer leaves gaps between adjacent grade intervals.
+
 # rqti 1.2.1
 
 ## Bug fixes
@@ -55,6 +91,10 @@ file in a temporary directory, allowing combination with native rqti items.
 `getGroupUsers()` for retrieving course groups and group users as data frames.
 
 ## Improvements
+
+* Improved `extract_results()` performance for archives with many result files
+  by extracting only relevant XML/result zip files, avoiding repeated row
+  binding, and reducing XPath work for item-level responses.
 
 * Enhanced `verify_qti()` to support different input types, provide more 
 informative validation messages, and use both `xmllint` and `xml2` backends
@@ -151,7 +191,7 @@ is not given.
 
 ### New features
 
-* New API OPAL function `get_course_elements()` returns dataframe with elements of 
+* New API OPAL function `get_course_elements()` returns a data frame with elements of 
 the course by course id.
 
 * New API OPAL function `get_course_results()` returns an xml with data about 

@@ -26,25 +26,58 @@ test_that("Testing mdlist function", {
     expect_error(mdlist(options4, gaps = gaps4))
 })
 
+test_that("identifier helpers reject invalid identifiers", {
+    expect_error(
+        check_identifier(letters[1:2]),
+        "Identifier must be a single character string.",
+        fixed = TRUE
+    )
+    expect_error(
+        repair_identifier(letters[1:2]),
+        "Identifier must be a single character string.",
+        fixed = TRUE
+    )
+
+    expect_false(check_identifier("1abc", quiet = TRUE))
+    expect_false(check_identifier("has space", quiet = TRUE))
+    expect_false(check_identifier("has:colon", quiet = TRUE))
+    expect_false(check_identifier("bad!", quiet = TRUE))
+    expect_false(check_identifier("Pr\u00fcfung", quiet = TRUE))
+
+    expect_error(check_identifier("1abc"), "must start with")
+    expect_error(check_identifier("has space"), "contains whitespace")
+    expect_error(check_identifier("has:colon"), "contains ':'")
+    expect_error(check_identifier("bad!"), "contains invalid characters")
+    expect_error(check_identifier("Pr\u00fcfung"), "contains German umlauts")
+    expect_equal(repair_identifier("has space"), "has_space")
+})
+
+test_that("warn_once() warns once for each id", {
+    id <- paste0("test-warn-once-", sample.int(1e6, 1))
+
+    expect_warning(warn_once("first warning", id), "first warning")
+    expect_silent(warn_once("second warning", id))
+})
+
 test_that("Testing gap_numeric() function", {
     sut<- gap_numeric(solution = 300,
                       tolerance = 1,
                       points = 2)
 
-    expected <- '<gap>{solution: 300, tolerance: 1, tolerance_type: absolute, points: 2, include_lower_bound: yes, include_upper_bound: yes, expected_length: 2, type: numeric}</gap>'
+    expected <- '<gap>{solution: 300, tolerance: 1, tolerance_type: \'absolute\', points: 2, include_lower_bound: true, include_upper_bound: true, expected_length: 2, type: \'numeric\'}</gap>'
 
     expect_equal(sut, expected)
 })
 
 test_that("Test helper function dropdown(), min version", {
     sut <- dropdown(c("a", "b"), points = 4.55)
-    expected <- "<gap>{choices: [a,b], solution_index: 1, points: 4.55, shuffle: yes, type: InlineChoice}</gap>"
+    expected <- "<gap>{choices: ['a', 'b'], solution_index: 1, points: 4.55, shuffle: true, type: 'InlineChoice'}</gap>"
     expect_equal(sut, expected)
 })
 
 test_that("Test helper function dropdown() with named vector", {
     sut <- dropdown(c("a a."="a", "b b."="b"))
-    expected <- "<gap>{choices: [a,b], solution_index: 1, points: 1, shuffle: yes, choices_identifiers: [a a.,b b.], type: InlineChoice}</gap>"
+    expected <- "<gap>{choices: ['a', 'b'], solution_index: 1, points: 1, shuffle: true, choices_identifiers: ['a a.', 'b b.'], type: 'InlineChoice'}</gap>"
     expect_equal(sut, expected)
 })
 
@@ -62,6 +95,6 @@ test_that("Test helper function dropdown(), long content and named vector as inp
         points = 0.5,
         response_identifier = "dd_voraussetzung"
     )
-    expected <- "<gap>{choices: [xxxxxxxxx xxxxx xxx xxxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xxxxxxx xxx.,yyyyyyyyy yyy yyyyy y yyy yyyyy y.,zzzzzzzzzz zzzzz zzzzz z zzz zzz zzzzzzzzzzzz zzzzzzzzz.], solution_index: 1, points: 0.5, shuffle: yes, response_identifier: dd_voraussetzung, choices_identifiers: [xxxxxxxxx xxxxx xxx xxxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xxxxxxx xxx.,yyyyyyyyy yyy yyyyy y yyy yyyyy y.,zzzzzzzzzz zzzzz zzzzz z zzz zzz zzzzzzzzzzzz zzzzzzzzz.], type: InlineChoice}</gap>"
+    expected <- "<gap>{choices: ['xxxxxxxxx xxxxx xxx xxxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xxxxxxx xxx.', 'yyyyyyyyy yyy yyyyy y yyy yyyyy y.', 'zzzzzzzzzz zzzzz zzzzz z zzz zzz zzzzzzzzzzzz zzzzzzzzz.'], solution_index: 1, points: 0.5, shuffle: true, response_identifier: 'dd_voraussetzung', choices_identifiers: ['xxxxxxxxx xxxxx xxx xxxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xxxxxxx xxx.', 'yyyyyyyyy yyy yyyyy y yyy yyyyy y.', 'zzzzzzzzzz zzzzz zzzzz z zzz zzz zzzzzzzzzzzz zzzzzzzzz.'], type: 'InlineChoice'}</gap>"
     expect_equal(sut, expected)
 })

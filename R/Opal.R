@@ -38,6 +38,13 @@ opal <- function(api_user = NA_character_, endpoint = NA_character_) {
     return(result)
 }
 
+ensure_opal_login <- function(object) {
+    if (isUserLoggedIn(object)) return(TRUE)
+
+    login_status <- authLMS(object)
+    login_status == 200
+}
+
 #' Check if User is Logged in LMS Opal
 #'
 #' This method checks whether a user is logged into an LMS Opal by
@@ -69,16 +76,16 @@ setMethod("isUserLoggedIn", "Opal", function(object) {
 #'   [Opal] class.
 #' @param test An [AssessmentTest], [AssessmentTestOpal] or [AssessmentItem]
 #'   objects, or a character string with path to Rmd/md, zip or XML files.
-#' @param display_name A length one character vector to entitle resource in OPAL;
-#'  file name without extension or identifier of the object by default; optional.
-#' @param access An integer value, optional; it is responsible for publication
+#' @param display_name A length-one character vector naming the resource in OPAL;
+#'  by default, this is the file name without extension or the object identifier; optional.
+#' @param access An integer value, optional; it controls publication
 #'  status, where 1 - only those responsible for this learning resource; 2 -
 #'  responsible and other authors; 3 - all registered users; 4 - registered
 #'  users and guests. Default is 4.
 #' @param overwrite A boolean value. If `TRUE`, and a file with the specified
 #'   display name already exists, it will be overwritten. Default is `TRUE`.
-#' @param open_in_browser A boolean value; optional; it controls whether to open
-#'  a URL in default browser. Default is `TRUE.`
+#' @param open_in_browser A boolean value, optional; controls whether to open
+#'  a URL in the default browser. Default is `TRUE`.
 #' @param as_survey A boolean value, optional. If `TRUE`, the resource will be
 #'   treated as a survey; if `FALSE`, as a test. Default is `FALSE`.
 #' @docType methods
@@ -101,7 +108,7 @@ setMethod("upload2LMS", "Opal", function(object, test, display_name = NULL,
         ifelse(istest, "FileResource.TEST", "FileResource.QUESTION")
     }
 
-    rdf <- getLMSResourcesByName(object, display_name, rtype)
+    rdf <- getLMSResourcesByName(object, display_name)
 
     if (nrow(rdf) > 0 && overwrite) {
 
@@ -116,7 +123,7 @@ setMethod("upload2LMS", "Opal", function(object, test, display_name = NULL,
                 (curr_type == "FileResource.SURVEY" && istest && as_survey)) {
                 resp <- update_resource(file, rdf$key, endpoint = object@endpoint)
             } else {
-                stop("Current type and target type of the resouce is not equal.\n",
+                stop("Current type and target type of the resource is not equal.\n",
                      "Current type: ", curr_type, ";\nTarget type:", target_type,
                      "\n Create a new resource by assigning a display_name.\n",
                      "Call upload2opal(... display_name = \"new_name\")",
@@ -164,10 +171,7 @@ setMethod("upload2LMS", "Opal", function(object, test, display_name = NULL,
 #' @export
 setMethod("getLMSResources", "Opal", function(object){
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_res <- paste0(object@endpoint, "restapi/repo/entries/search?myentries=true")
     req <- request(url_res) %>%
@@ -183,7 +187,7 @@ setMethod("getLMSResources", "Opal", function(object){
 #'
 #' @param object An S4 object of class [Opal] that represents a connection to
 #'   the LMS.
-#' @param display_name A string value withe the name of resource.
+#' @param display_name A string value with the resource name.
 #' @param rtype A string value with the type of resource. Possible values:
 #'   "FileResource.TEST", "FileResource.QUESTION", or "FileResource.SURVEY".
 #' @rdname getLMSResourcesByName-methods
@@ -191,10 +195,7 @@ setMethod("getLMSResources", "Opal", function(object){
 setMethod("getLMSResourcesByName", "Opal", function(object, display_name,
                                                     rtype = NULL){
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     df <- getLMSResources(object)
     rlist <- subset(df, df$displayname == display_name)
@@ -207,16 +208,13 @@ setMethod("getLMSResourcesByName", "Opal", function(object, display_name,
 #' Create a URL using the resource's display name in LMS Opal
 #'
 #' @param object An S4 object of class [Opal] that represents a connection to the LMS.
-#' @param display_name A length one character vector to entitle file in OPAL;
+#' @param display_name A length-one character vector naming the file in OPAL;
 #'  it takes file name without extension by default; optional.
 #' @rdname getLMSResourceURL-methods
 #' @export
 setMethod("getLMSResourceURL", "Opal", function(object, display_name) {
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     rdf <- getLMSResourcesByName(object, display_name)
     if (length(rdf$key) == 0) {
@@ -233,16 +231,13 @@ setMethod("getLMSResourceURL", "Opal", function(object, display_name) {
 #'
 #' @param object An S4 object of class [Opal] that represents a connection to the LMS.
 #' @param course_id A length one character vector with course id.
-#' @return A dataframe with the data of the elements of the course (fields: nodeId,
+#' @return A data frame with the data of the elements of the course (fields: nodeId,
 #' shortTitle, shortName, longTitle) on LMS Opal.
 #' @rdname getCourseElements-methods
 #' @export
 setMethod("getCourseElements", "Opal", function(object, course_id) {
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_elem <- paste0(object@endpoint, "restapi/repo/courses/", course_id, "/elements")
     req <- request(url_elem) %>%
@@ -310,10 +305,7 @@ setMethod("updateCourseElementResource", "Opal", function(object, course_id,
                                                           node_id, resource_id,
                                                           publish = TRUE) {
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_res <- paste0(object@endpoint, "restapi/repo/courses/", course_id,
                       "/elements/", node_id,
@@ -339,10 +331,7 @@ setMethod("updateCourseElementResource", "Opal", function(object, course_id,
 #' @export
 setMethod("publishCourse", "Opal", function(object, course_id) {
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_res <- paste0(object@endpoint, "restapi/repo/courses/", course_id, "/publish")
     req <- request(url_res) %>%
@@ -368,10 +357,7 @@ setMethod("getCourseResult", "Opal", function(object, resource_id, node_id,
                                               path_outcome = ".", rename = TRUE){
     params <- as.list(environment())
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_res <- paste0(object@endpoint, "restapi/repo/courses/", resource_id,
                       "/assessments/", node_id, "/results")
@@ -422,6 +408,65 @@ setMethod("getCourseResult", "Opal", function(object, resource_id, node_id,
     }
 })
 
+#' Get assessment scores for a course element on LMS Opal
+#'
+#' This method retrieves current assessment data for a course element on LMS
+#' Opal by course id and course element id. It returns user metadata together
+#' with score, maximum score, passed status, and attempts. If `user_id` is
+#' supplied, the query is restricted to that user login name or email address.
+#'
+#' @param object An S4 object of class [Opal] that represents a connection to
+#'   the LMS.
+#' @param course_id A character vector of length one specifying the course
+#'   context ID.
+#' @param node_id A character vector of length one specifying the course element
+#'   ID.
+#' @param user_id A character vector of length one specifying the user login name
+#'   or email address. If `NULL`, assessments are returned for all users.
+#' @return A data frame with assessment scores. Each row represents a user and
+#'   contains identity id, user id, user name/email, score, maximum score,
+#'   passed status, and attempts.
+#' @examplesIf interactive()
+#' assessment <- getCourseAssessment("89068111333293", "1617337826161777006")
+#' @rdname getCourseAssessment-methods
+#' @export
+setMethod("getCourseAssessment", "Opal", function(object, course_id, node_id,
+                                                  user_id = NULL) {
+
+    if (!ensure_opal_login(object)) return(NULL)
+
+    url_res <- paste0(object@endpoint, "restapi/repo/courses/", course_id,
+                      "/assessments/", node_id)
+    if (!is.null(user_id)) {
+        url_res <- paste0(url_res, "?userId=", utils::URLencode(user_id, reserved = TRUE))
+    }
+
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN"=Sys.getenv("X-OLAT-TOKEN")) %>%
+        req_method("GET")
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+
+    if (response$status_code == 404) {
+        message("The course or course element could not be found.")
+        return(NULL)
+    }
+
+    if (response$status_code == 401) {
+        message("Status Code: 401 Unauthorized.")
+        message("The required permissions are typically granted to course owners, course administrators, or users in roles with access to the assessment tool.")
+        return(NULL)
+    }
+
+    if (response$status_code != 200) {
+        message("Request failed with status code ", response$status_code, ".")
+        return(NULL)
+    }
+
+    parsed_response <- resp_body_xml(response)
+    parse_course_assessment_response(parsed_response)
+})
+
+
 #' Get groups from a course on LMS Opal
 #'
 #' This method retrieves groups from a course on LMS Opal by its course id. The
@@ -444,10 +489,7 @@ setMethod("getCourseResult", "Opal", function(object, resource_id, node_id,
 #' @export
 setMethod("getCourseGroups", "Opal", function(object, course_id) {
 
-    if (!isUserLoggedIn(object)) {
-        login_status <- authLMS(object)
-        if (login_status != 200) return(NULL)
-    }
+    if (!ensure_opal_login(object)) return(NULL)
 
     url_res_group <- paste0(object@endpoint, "restapi/repo/courses/", course_id, "/groups")
     req <- request(url_res_group) %>%
@@ -465,30 +507,207 @@ setMethod("getCourseGroups", "Opal", function(object, course_id) {
     }
 
     parsed_response <- resp_body_xml(response)
-    groups <- xml2::as_list(parsed_response)$groupVOes
+    parse_group_vo_response(parsed_response)
+})
 
-    get_first_chr <- function(x) {
-        if (!is.null(x) && length(x) > 0) as.character(x[[1]]) else NA_character_
-    }
 
-    get_first_num <- function(x) {
-        if (!is.null(x) && length(x) > 0) as.numeric(x[[1]]) else NA_real_
-    }
+#' Create a group in a course on LMS Opal
+#'
+#' This method creates a learning group in an LMS Opal course using OPAL's
+#' `GroupVO` XML representation. The group name must be unique within the
+#' course. `invitationEnabled` controls whether new group members receive an
+#' invitation that has to be accepted; `signoutEnabled` controls whether members
+#' may leave the group themselves.
+#'
+#' @param object An S4 object of class [Opal] that represents a connection to
+#'   the LMS.
+#' @param course_id A character vector of length one specifying the course
+#'   resource ID. Note that this is not the course ID shown in the URL, but a
+#'   longer identifier available via the "Show more information" option within
+#'   the course.
+#' @param name A character vector of length one with the group name.
+#' @param description A character vector of length one with the group
+#'   description. Defaults to an empty string.
+#' @param minParticipants A numeric value with the minimum number of
+#'   participants. Defaults to `0`.
+#' @param maxParticipants A numeric value with the maximum number of
+#'   participants. Defaults to `0`.
+#' @param invitationEnabled A boolean value. If `TRUE`, invitations are enabled
+#'   for new group members. Defaults to `TRUE`.
+#' @param signoutEnabled A boolean value. If `TRUE`, members may leave the
+#'   group themselves. Defaults to `TRUE`.
+#' @return A one-row data frame with the created group attributes, or `NULL`
+#'   when OPAL rejects the request.
+#' @examplesIf interactive()
+#' group <- createCourseGroup(
+#'     "89068111333293",
+#'     "Topic 5",
+#'     description = "Group for topic 5",
+#'     minParticipants = 1,
+#'     maxParticipants = 1,
+#'     invitationEnabled = FALSE,
+#'     signoutEnabled = FALSE
+#' )
+#' @rdname createCourseGroup-methods
+#' @export
+setMethod("createCourseGroup", "Opal",
+          function(object, course_id, name, description = "",
+                   minParticipants = 0, maxParticipants = 0,
+                   invitationEnabled = TRUE, signoutEnabled = TRUE) {
 
-    get_first_lgl <- function(x) {
-        if (!is.null(x) && length(x) > 0) as.logical(x[[1]]) else NA
-    }
-    groups_df <- data.frame(
-        key = vapply(groups, function(g) get_first_chr(g$key), character(1)),
-        name = vapply(groups, function(g) get_first_chr(g$name), character(1)),
-        description = vapply(groups, function(g) get_first_chr(g$description), character(1)),
-        minParticipants = vapply(groups, function(g) get_first_num(g$minParticipants), numeric(1)),
-        maxParticipants = vapply(groups, function(g) get_first_num(g$maxParticipants), numeric(1)),
-        invitationEnabled = vapply(groups, function(g) get_first_lgl(g$invitationEnabled), logical(1)),
-        signoutEnabled = vapply(groups, function(g) get_first_lgl(g$signoutEnabled), logical(1)),
-        stringsAsFactors = FALSE
+    if (!ensure_opal_login(object)) return(NULL)
+
+    group_xml <- create_group_vo_xml(
+        name = name,
+        description = description,
+        minParticipants = minParticipants,
+        maxParticipants = maxParticipants,
+        invitationEnabled = invitationEnabled,
+        signoutEnabled = signoutEnabled
     )
-    return(groups_df)
+
+    url_res_group <- paste0(object@endpoint, "restapi/repo/courses/",
+                            course_id, "/groups")
+    req <- request(url_res_group) %>%
+        req_headers("X-OLAT-TOKEN" = Sys.getenv("X-OLAT-TOKEN"),
+                    "Content-Type" = "application/xml") %>%
+        req_method("PUT") %>%
+        req_body_raw(charToRaw(group_xml), type = "application/xml")
+    response <- req %>% req_error(is_error = ~ FALSE) %>% req_perform()
+
+    if (response$status_code == 400) {
+        message("The group could not be created. It may already exist in the course.")
+        return(NULL)
+    }
+
+    if (response$status_code == 401) {
+        message("Status Code: 401 Unauthorized.")
+        message("The required permissions are typically granted to course owners, course administrators, or users in roles with access to the assessment tool.")
+        return(NULL)
+    }
+
+    if (response$status_code == 404) {
+        message("The course could not be found.")
+        return(NULL)
+    }
+
+    if (response$status_code != 200) {
+        message("Request failed with status code ", response$status_code, ".")
+        return(NULL)
+    }
+
+    parsed_response <- resp_body_xml(response)
+    parse_group_vo_response(parsed_response)
+})
+
+
+#' Add a user to a group on LMS Opal
+#'
+#' This method adds a user to a learning group in LMS Opal by group id and user
+#' id.
+#'
+#' @param object An S4 object of class [Opal] that represents a connection to
+#'   the LMS.
+#' @param group_id A character vector of length one specifying the group ID.
+#' @param user_id A character vector of length one specifying the user ID.
+#' @return Status code `200` if the user was added successfully, or `NULL` when
+#'   OPAL rejects the request.
+#' @examplesIf interactive()
+#' addGroupUser("442662912", "196610")
+#' @rdname addGroupUser-methods
+#' @export
+setMethod("addGroupUser", "Opal", function(object, group_id, user_id) {
+
+    if (!ensure_opal_login(object)) return(NULL)
+
+    assert_opal_api_scalar(group_id, "group_id")
+    assert_opal_api_scalar(user_id, "user_id")
+
+    url_res <- paste0(object@endpoint, "restapi/groups/", group_id,
+                      "/participants/", user_id)
+
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN" = Sys.getenv("X-OLAT-TOKEN")) %>%
+        req_method("PUT")
+
+    response <- req %>%
+        req_error(is_error = ~ FALSE) %>%
+        req_perform()
+
+    if (response$status_code == 401) {
+        message("Status Code: 401 Unauthorized.")
+        message("The required permissions are typically granted to course owners, course administrators, or users in roles with access to the assessment tool.")
+        return(NULL)
+    }
+
+    if (response$status_code == 404) {
+        message("The group or user could not be found.")
+        return(NULL)
+    }
+
+    if (response$status_code != 200) {
+        message("Request failed with status code ", response$status_code, ".")
+        return(NULL)
+    }
+
+    as.integer(response$status_code)
+})
+
+
+#' Remove a user from a group on LMS Opal
+#'
+#' This method removes a user from a learning group in LMS Opal by group id and
+#' user id.
+#'
+#' @param object An S4 object of class [Opal] that represents a connection to
+#'   the LMS.
+#' @param group_id A character vector of length one specifying the group ID.
+#' @param user_id A character vector of length one specifying the user ID.
+#' @return Status code `200` if the user was removed successfully, or `NULL`
+#'   when OPAL rejects the request.
+#' @examplesIf interactive()
+#' removeGroupUser("442662912", "196610")
+#' @rdname removeGroupUser-methods
+#' @export
+setMethod("removeGroupUser", "Opal", function(object, group_id, user_id) {
+
+    if (!ensure_opal_login(object)) return(NULL)
+
+    assert_opal_api_scalar(group_id, "group_id")
+    assert_opal_api_scalar(user_id, "user_id")
+
+    url_res <- paste0(object@endpoint, "restapi/groups/", group_id,
+                      "/participants/", user_id)
+
+    req <- request(url_res) %>%
+        req_headers("X-OLAT-TOKEN" = Sys.getenv("X-OLAT-TOKEN")) %>%
+        req_method("DELETE")
+
+    response <- req %>%
+        req_error(is_error = ~ FALSE) %>%
+        req_perform()
+
+    if (response$status_code == 401) {
+        message("Status Code: 401 Unauthorized.")
+        return(NULL)
+    }
+
+    if (response$status_code == 404) {
+        message("The group or user could not be found.")
+        return(NULL)
+    }
+
+    if (response$status_code == 304) {
+        message("The user could not be removed because they are not a participant of the group.")
+        return(NULL)
+    }
+
+    if (response$status_code != 200) {
+        message("Request failed with status code ", response$status_code, ".")
+        return(NULL)
+    }
+
+    as.integer(response$status_code)
 })
 
 
@@ -520,6 +739,8 @@ setMethod("getCourseGroups", "Opal", function(object, course_id) {
 #' @export
 setMethod("getGroupUsers", "Opal", function(object, group_id) {
 
+    if (!ensure_opal_login(object)) return(NULL)
+
     get_first_chr <- function(x) {
         if (!is.null(x) && length(x) > 0) {
             as.character(x[[1]])
@@ -542,8 +763,6 @@ setMethod("getGroupUsers", "Opal", function(object, group_id) {
         response <- req %>%
             req_error(is_error = ~ FALSE) %>%
             req_perform()
-
-        print(response$status_code)
 
         if (response$status_code == 404) {
             message("The group ", gid, " could not be found.")
@@ -601,6 +820,192 @@ setMethod("getGroupUsers", "Opal", function(object, group_id) {
 })
 
 
+create_group_vo_xml <- function(name, description = "", minParticipants = 0,
+                                maxParticipants = 0,
+                                invitationEnabled = TRUE,
+                                signoutEnabled = TRUE) {
+    assert_opal_api_scalar(name, "name")
+    assert_opal_api_scalar(description, "description")
+    assert_opal_api_scalar(minParticipants, "minParticipants")
+    assert_opal_api_scalar(maxParticipants, "maxParticipants")
+    assert_opal_api_scalar(invitationEnabled, "invitationEnabled")
+    assert_opal_api_scalar(signoutEnabled, "signoutEnabled")
+
+    if (!is.logical(invitationEnabled)) {
+        stop("`invitationEnabled` must be TRUE or FALSE.", call. = FALSE)
+    }
+    if (!is.logical(signoutEnabled)) {
+        stop("`signoutEnabled` must be TRUE or FALSE.", call. = FALSE)
+    }
+
+    minParticipants <- suppressWarnings(as.numeric(minParticipants))
+    maxParticipants <- suppressWarnings(as.numeric(maxParticipants))
+
+    if (is.na(minParticipants)) {
+        stop("`minParticipants` must be numeric.", call. = FALSE)
+    }
+    if (is.na(maxParticipants)) {
+        stop("`maxParticipants` must be numeric.", call. = FALSE)
+    }
+
+    bool_xml <- function(x) if (isTRUE(x)) "true" else "false"
+
+    group <- xml2::xml_new_root("groupVO")
+    xml2::xml_add_child(group, "name", as.character(name))
+    xml2::xml_add_child(group, "description", as.character(description))
+    xml2::xml_add_child(group, "minParticipants", as.character(minParticipants))
+    xml2::xml_add_child(group, "maxParticipants", as.character(maxParticipants))
+    xml2::xml_add_child(group, "invitationEnabled", bool_xml(invitationEnabled))
+    xml2::xml_add_child(group, "signoutEnabled", bool_xml(signoutEnabled))
+
+    as.character(group)
+}
+
+assert_opal_api_scalar <- function(x, arg) {
+    if (length(x) != 1 || is.na(x)) {
+        stop("`", arg, "` must be a non-missing value of length one.",
+             call. = FALSE)
+    }
+}
+
+parse_group_vo_response <- function(parsed_response) {
+    root <- xml2::xml_root(parsed_response)
+    records <- if (xml2::xml_name(root) == "groupVO") {
+        list(root)
+    } else {
+        as.list(xml2::xml_find_all(root, ".//*[local-name()='groupVO']"))
+    }
+
+    get_text <- function(node, path) {
+        value <- xml2::xml_text(xml2::xml_find_first(node, path))
+        if (length(value) == 0 || is.na(value)) NA_character_ else value
+    }
+
+    get_num <- function(node, path) {
+        as.numeric(get_text(node, path))
+    }
+
+    get_lgl <- function(node, path) {
+        as.logical(get_text(node, path))
+    }
+
+    group_vo_df(
+        key = vapply(records, get_text, character(1),
+                     "./*[local-name()='key']"),
+        name = vapply(records, get_text, character(1),
+                      "./*[local-name()='name']"),
+        description = vapply(records, get_text, character(1),
+                             "./*[local-name()='description']"),
+        type = vapply(records, get_text, character(1),
+                      "./*[local-name()='type']"),
+        minParticipants = vapply(records, get_num, numeric(1),
+                                 "./*[local-name()='minParticipants']"),
+        maxParticipants = vapply(records, get_num, numeric(1),
+                                 "./*[local-name()='maxParticipants']"),
+        invitationEnabled = vapply(records, get_lgl, logical(1),
+                                   "./*[local-name()='invitationEnabled']"),
+        signoutEnabled = vapply(records, get_lgl, logical(1),
+                                "./*[local-name()='signoutEnabled']")
+    )
+}
+
+group_vo_df <- function(key = character(),
+                        name = character(),
+                        description = character(),
+                        type = character(),
+                        minParticipants = numeric(),
+                        maxParticipants = numeric(),
+                        invitationEnabled = logical(),
+                        signoutEnabled = logical()) {
+    df <- data.frame(
+        key = key,
+        name = name,
+        description = description,
+        type = type,
+        minParticipants = minParticipants,
+        maxParticipants = maxParticipants,
+        invitationEnabled = invitationEnabled,
+        signoutEnabled = signoutEnabled,
+        stringsAsFactors = FALSE
+    )
+    rownames(df) <- NULL
+    df
+}
+
+
+parse_course_assessment_response <- function(parsed_response) {
+    records <- xml2::xml_find_all(parsed_response,
+                                  ".//*[local-name()='assessableResultsVO']")
+
+    get_text <- function(node, path) {
+        value <- xml2::xml_text(xml2::xml_find_first(node, path))
+        if (length(value) == 0 || is.na(value)) NA_character_ else value
+    }
+
+    get_num <- function(node, path) {
+        as.numeric(get_text(node, path))
+    }
+
+    get_int <- function(node, path) {
+        as.integer(get_text(node, path))
+    }
+
+    get_lgl <- function(node, path) {
+        as.logical(get_text(node, path))
+    }
+
+    course_assessment_df(
+        identity_key = vapply(records, get_text, character(1),
+                              ".//*[local-name()='identityKey']"),
+        user_id = vapply(records, get_text, character(1),
+                         ".//*[local-name()='userVO']/*[local-name()='key']"),
+        user_login = vapply(records, get_text, character(1),
+                            ".//*[local-name()='userVO']/*[local-name()='login']"),
+        user_first_name = vapply(records, get_text, character(1),
+                                 ".//*[local-name()='userVO']/*[local-name()='firstName']"),
+        user_last_name = vapply(records, get_text, character(1),
+                                ".//*[local-name()='userVO']/*[local-name()='lastName']"),
+        user_email = vapply(records, get_text, character(1),
+                            ".//*[local-name()='userVO']/*[local-name()='email']"),
+        score = vapply(records, get_num, numeric(1),
+                       ".//*[local-name()='score']"),
+        max_score = vapply(records, get_num, numeric(1),
+                           ".//*[local-name()='maxScore']"),
+        passed = vapply(records, get_lgl, logical(1),
+                        ".//*[local-name()='passed']"),
+        attempts = vapply(records, get_int, integer(1),
+                          ".//*[local-name()='attempts']")
+    )
+}
+
+course_assessment_df <- function(identity_key = character(),
+                                 user_id = character(),
+                                 user_login = character(),
+                                 user_first_name = character(),
+                                 user_last_name = character(),
+                                 user_email = character(),
+                                 score = numeric(),
+                                 max_score = numeric(),
+                                 passed = logical(),
+                                 attempts = integer()) {
+    df <- data.frame(
+        identity_key = identity_key,
+        user_id = user_id,
+        user_login = user_login,
+        user_first_name = user_first_name,
+        user_last_name = user_last_name,
+        user_email = user_email,
+        score = score,
+        max_score = max_score,
+        passed = passed,
+        attempts = attempts,
+        stringsAsFactors = FALSE
+    )
+    rownames(df) <- NULL
+    df
+}
+
+
 #' @importFrom curl form_file
 upload_resource <- function(file, display_name, rtype, access,
                             endpoint = NULL) {
@@ -640,28 +1045,30 @@ update_resource <- function(file, id, rtype, endpoint = NULL) {
 #'@param test A length one character vector of [AssessmentTest],
 #'  [AssessmentTestOpal] or [AssessmentItem] objects, Rmd/md or XML files;
 #'  required.
-#'@param display_name A length one character vector to entitle file in OPAL;
-#'  file name without extension by default; optional.
-#'@param access An integer value, optional; it is responsible for publication
+#'@param display_name A length-one character vector naming the file in OPAL;
+#'  by default, this is the file name without extension; optional.
+#'@param access An integer value, optional; it controls publication
 #'  status, where 1 - only those responsible for this learning resource; 2 -
 #'  responsible and other authors; 3 - all registered users; 4 - registered
 #'  users and guests. Default is 4.
-#'@param overwrite A boolean value; if the value is `TRUE`, if only one file
-#'  with the specified display name is found, it will be overwritten. Default is
-#'  `TRUE`.
-#'@param endpoint A string of endpoint of LMS Opal; by default it is got from
+#'@param overwrite A boolean value; if `TRUE` and exactly one file with the
+#'  specified display name is found, it will be overwritten. Default is `TRUE`.
+#'@param endpoint A string containing the OPAL LMS endpoint; by default, it is read from
 #'  environment variable `RQTI_API_ENDPOINT`. To set a global environment
 #'  variable, you need to call `Sys.setenv(RQTI_API_ENDPOINT='xxxxxxxxxxxxxxx')`
-#'  or you can put these command into .Renviron.
-#'@param open_in_browser A boolean value; optional; it controls whether to open
-#'  a URL in default browser. Default is `TRUE.`
-#'@param as_survey A boolean value; optional; it controls resource type (test
-#'r survey). Default is `FALSE`.
+#'  or put this command into .Renviron.
+#'@param open_in_browser A boolean value, optional; controls whether to open
+#'  a URL in the default browser. Default is `TRUE`.
+#'@param as_survey A boolean value, optional; controls the resource type (test
+#'  or survey). Default is `FALSE`.
 #'@param api_user A character value of the username in the OPAL.
 #'@return A list with the key, display name, and URL of the resource in Opal.
 #'@examplesIf interactive()
-#'file <- system.file("exercises/sc1.Rmd", package='rqti')
-#' upload2opal(file, "task 1", open_in_browser = FALSE)
+#'file <- system.file(
+#'     "rmarkdown/templates/singlechoice-simple/skeleton/skeleton.Rmd",
+#'     package='rqti'
+#')
+#'upload2opal(file, "task 1", open_in_browser = FALSE)
 #'@export
 upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
                         endpoint = NULL, open_in_browser = TRUE,
@@ -674,5 +1081,3 @@ upload2opal <- function(test, display_name = NULL, access = 4, overwrite = TRUE,
                open_in_browser = open_in_browser,
                as_survey = as_survey)
 }
-
-

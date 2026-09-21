@@ -75,7 +75,8 @@ create_question_object <- function(file) {
     mtdata$contributor <- contrs
     mtdata <- do.call(qtiMetadata, mtdata)
     # ignore parameters that are not related to object creation
-    attrs <- attrs[! names(attrs) %in% c("knit", "metadata", "params")]
+    attrs <- attrs[! names(attrs) %in% c("knit", "metadata", "params",
+                                         "preview_feedback")]
 
     tdir <- tempdir()
 
@@ -205,6 +206,9 @@ create_entry_slots <- function(html, attrs) {
 create_gap_object <- function(entry, id) {
     gap_str <- xml2::xml_text(entry)
     gap_str <- sub("\r\n", " ", gap_str)
+    gap_str <- gsub("\u2018|\u2019", "'", gap_str)
+    gap_str <- gsub("\u201C|\u201D", '"', gap_str)
+
     attrs <- yaml::yaml.load(gap_str)
     if (!is.list(attrs)) {
         if (!is.na(suppressWarnings(as.numeric(gap_str)))) {
@@ -515,7 +519,7 @@ define_match_class <- function(ids, rows, cols, as_table = FALSE) {
                 cls <- "DirectedPair"
                 message(paste("The task is converted into \'Directed pair\'",
                               "type. To keep table put \'as_table: TRUE\'",
-                              "in yaml section of the Rmd file"))
+                              "in YAML section of the Rmd file"))
             }
 
         } else {
@@ -531,7 +535,7 @@ define_match_class <- function(ids, rows, cols, as_table = FALSE) {
                 cls <- "DirectedPair"
                 message(paste("The task is converted into \'Directed pair\'",
                               "type. To keep table put \'as_table=T\'",
-                              "in yaml section of the Rmd file"))
+                              "in YAML section of the Rmd file"))
             }
         } else {
             cls <- "OneInColTable"
@@ -574,7 +578,7 @@ rmd_detect_type <- function(file) {
     pattern <- c("<<.*?>>", "<gap>.*?</gap>")
     matches <- any(grepl(paste(pattern, collapse = "|"), content))
     if (!matches) {
-        stop("Define correct type of the task in yaml section of Rmd file")
+        stop("Define the correct task type in the YAML section of the Rmd file")
     } else {
         return("gap")
     }
@@ -591,7 +595,7 @@ pandoc_html_convert <- function(input_file, output_file_name, dir_name) {
                  "--mathjax",
                  emb,
                  "--section-divs",
-                 "--no-highlight",
+                 "--syntax-highlighting=none",
                  "--wrap=none",
                  lua_opt,
                  "+RTS", "-M512M")
