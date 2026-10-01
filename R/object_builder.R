@@ -55,6 +55,19 @@ rmd2xml <- function(file, path = getwd(), verification = FALSE) {
 #' [Essay], [Entry], [Ordering], [OneInRowTable], [OneInColTable],
 #' [MultipleChoiceTable], [DirectedPair]) from an Rmd file.
 #'
+#' @section CSS in YAML:
+#' Use `stylesheet_path: styles.css` for a CSS file (or a YAML sequence of
+#' files). Relative paths are resolved against the Rmd file's directory.
+#' Use a YAML literal block `css: |` for CSS text. When both are supplied,
+#' files are linked in the supplied order, followed by the CSS text.
+#' Stylesheets are linked from the assessment item and included in QTI ZIPs
+#' and their manifests. Standalone XML exports write CSS beside the XML in
+#' a `styles/items/` subdirectory; keep that directory with the XML.
+#' These fields do not convert inline HTML `style` attributes to classes.
+#' CSS references such as `url(...)` and `@import` are not collected or
+#' rewritten; use self-contained stylesheets. Rendering depends on the
+#' delivery platform's CSS support.
+#'
 #' @param file A string representing the path to an Rmd file.
 #' @return One of the rqti S4 AssessmentItem objects: [SingleChoice],
 #' [MultipleChoice], [Essay], [Entry], [Ordering], [OneInRowTable],
@@ -68,6 +81,28 @@ rmd2xml <- function(file, path = getwd(), verification = FALSE) {
 create_question_object <- function(file) {
     rmd_checker(file)
     attrs <- yaml_front_matter(file)
+    if (!is.null(attrs$stylesheet_path)) {
+        paths <- attrs$stylesheet_path
+        if (is.list(paths) && all(vapply(paths, function(x) {
+            is.character(x) && length(x) == 1L
+        }, logical(1)))) paths <- unlist(paths, use.names = FALSE)
+        if (!is.character(paths) || anyNA(paths) || any(!nzchar(paths))) {
+            stop("'stylesheet_path' must contain non-empty file paths.", call. = FALSE)
+        }
+        # Relative paths are relative to the source, even when called elsewhere.
+        absolute <- grepl("^(/|[A-Za-z]:[/\\\\]|~)", paths)
+        paths[!absolute] <- file.path(dirname(normalizePath(file)), paths[!absolute])
+        check_files_existence(paths)
+        if (any(dir.exists(paths))) stop("'stylesheet_path' must refer to files.", call. = FALSE)
+        attrs$stylesheet_path <- normalizePath(paths, winslash = "/", mustWork = TRUE)
+    }
+    if (!is.null(attrs$css) &&
+        (!is.character(attrs$css) || length(attrs$css) != 1L || anyNA(attrs$css))) {
+        stop("'css' must be a single string of CSS text.", call. = FALSE)
+    }
+    # YAML null means no stylesheet, rather than an invalid S4 slot value.
+    if (is.null(attrs$css)) attrs$css <- NULL
+    if (is.null(attrs$stylesheet_path)) attrs$stylesheet_path <- NULL
     # form value for slot metadata
     mtdata <- attrs$metadata
     contrs <- lapply(mtdata$contributor, function(x) {do.call(qtiContributor, x)})
@@ -584,23 +619,68 @@ rmd_detect_type <- function(file) {
     }
 }
 
+pandoc_highlight_option <- function() {
+    pandoc_info <- rmarkdown::find_pandoc()
+    pandoc <- file.path(
+        pandoc_info$dir,
+        if (.Platform$OS.type == "windows") "pandoc.exe" else "pandoc"
+    )
+
+    help <- system2(
+        pandoc,
+        "--help",
+        stdout = TRUE,
+        stderr = TRUE
+    )
+
+    if (any(grepl("--syntax-highlighting", help, fixed = TRUE))) {
+        "--syntax-highlighting=none"
+    } else {
+        "--no-highlight"
+    }
+}
+
 pandoc_html_convert <- function(input_file, output_file_name, dir_name) {
-    pnd_v <- numeric_version("2.19")
-    emb <- ifelse(rmarkdown::pandoc_version() > pnd_v, "--embed-resources", "")
+    pandoc_version <- rmarkdown::pandoc_version()
 
-    lua_filter <- system.file("pandoc", "remove-ol-type.lua", package = "rqti")
-    lua_opt <- if (nzchar(lua_filter)) paste0("--lua-filter=", lua_filter) else character(0)
+    embed_opt <- if (pandoc_version > numeric_version("2.19")) {
+        "--embed-resources"
+    } else {
+        character(0)
+    }
 
-    options <- c("-o", output_file_name, "-f", "markdown+tex_math_dollars", "-t", "html5",
-                 "--mathjax",
-                 emb,
-                 "--section-divs",
-                 "--syntax-highlighting=none",
-                 "--wrap=none",
-                 lua_opt,
-                 "+RTS", "-M512M")
+    highlight_opt <- pandoc_highlight_option()
 
-    rmarkdown::pandoc_convert(input_file, options = options, wd = dir_name)
+    lua_filter <- system.file(
+        "pandoc",
+        "remove-ol-type.lua",
+        package = "rqti"
+    )
+
+    lua_opt <- if (nzchar(lua_filter)) {
+        paste0("--lua-filter=", lua_filter)
+    } else {
+        character(0)
+    }
+
+    options <- c(
+        "-o", output_file_name,
+        "-f", "markdown+tex_math_dollars",
+        "-t", "html5",
+        "--mathjax",
+        embed_opt,
+        "--section-divs",
+        highlight_opt,
+        "--wrap=none",
+        lua_opt,
+        "+RTS", "-M512M"
+    )
+
+    rmarkdown::pandoc_convert(
+        input_file,
+        options = options,
+        wd = dir_name
+    )
 
     output_path <- file.path(dir_name, output_file_name)
 
