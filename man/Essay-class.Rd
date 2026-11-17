@@ -21,7 +21,7 @@ with the task. By default, it takes the value of the identifier.}
 
 \item{\code{content}}{A list of character content to form the text of the question,
 which can include HTML tags. For tasks of the \link{Entry} type, it must also
-contain at least one instance of Gap objects, such as \linkS4class{TextGap},
+contain at least one instance of Gap objects, such as \link[=TextGap-class]{TextGap},
 \link{TextGapOpal}, \link{NumericGap}, or \link{InlineChoice}.}
 
 \item{\code{prompt}}{An optional character representing a simple question text,
@@ -84,6 +84,8 @@ number of words that a candidate should write in the text input field.}
 
 \item{\code{data_allow_paste}}{A logical, optional. Determines whether it is possible
 for a candidate to copy text into the text input field. Default is \code{TRUE}. Only works on OPAL and OpenOlat.}
+
+\item{\code{response_identifier}}{QTI response identifier. Default \code{"RESPONSE"}.}
 }}
 
 \note{

@@ -11,6 +11,23 @@ test_that("verify_qti validates a correct QTI document", {
     expect_true(verify_qti(x, print = F, engine = "xml2")$valid)
 })
 
+test_that("OpenOlat configuration is packaged separately from QTI validation", {
+    item <- singleChoice(identifier = "opal_item", choices = c("A", "B"))
+    assessment <- assessmentTestOpenOlat(
+        list(assessmentSection(list(item), identifier = "section")),
+        identifier = "openolat", rebuild_variables = NA)
+    results <- verify_qti(assessment, print = FALSE, engine = "xml2")
+    expect_length(results, 2L)
+    expect_true(all(vapply(results, function(x) x$valid, logical(1))))
+    expect_false("QTI21PackageConfig.xml" %in% names(results))
+    out <- withr::local_tempdir()
+    archive <- createQtiTest(assessment, dir = out, zip_only = TRUE)
+    expect_true(any(basename(utils::unzip(archive, list = TRUE)$Name) == "QTI21PackageConfig.xml"))
+    assessment@section[[1]]@assessment_item[[1]]@content <- list("<madeUp/>")
+    invalid <- verify_qti(assessment, print = FALSE, engine = "xml2")
+    expect_true(any(!vapply(invalid, function(x) x$valid, logical(1))))
+})
+
 test_that("verify_qti reports the schema used for validation", {
     f <- system.file("extdata", "sc1d.xml", package = "rqti")
 
@@ -141,6 +158,45 @@ test_that("verify_qti explains unknown schema selectors", {
         "Unknown schema selector or missing XSD file",
         fixed = TRUE
     )
+})
+
+test_that("QTI 2.2 schemas unpack in a session directory and are reused", {
+    schema_file <- rqti:::qti22_schema_file()
+    expect_true(startsWith(normalizePath(schema_file, winslash = "/"),
+                           paste0(normalizePath(tempdir(), winslash = "/"), "/")))
+    expect_identical(rqti:::qti22_schema_file(), schema_file)
+    directory <- dirname(dirname(schema_file))
+    expect_true(file.exists(file.path(directory, "w3", "mathml3", "mathml3.xsd")))
+    expect_true(file.exists(file.path(directory, "apipv1p0",
+                                     "apipv1p0_qtiextv2p2_v1p0p1.xsd")))
+
+    # Rebuild if a caller clears the R session's temporary files.
+    unlink(directory, recursive = TRUE)
+    replacement <- rqti:::qti22_schema_file()
+    expect_true(file.exists(replacement))
+    expect_false(identical(replacement, schema_file))
+})
+
+test_that("compressed QTI 2.2 schemas reject invalid XML with both backends", {
+    f <- system.file("extdata", "sc1d.xml", package = "rqti")
+    text <- gsub("http://www.imsglobal.org/xsd/imsqti_v2p1",
+                 "http://www.imsglobal.org/xsd/imsqti_v2p2",
+                 paste(readLines(f, warn = FALSE), collapse = "\n"), fixed = TRUE)
+    document <- xml2::read_xml(text)
+    body <- xml2::xml_find_first(document, "//*[local-name()='itemBody']")
+    xml2::xml_add_child(body, "invalid_element")
+    expect_no_warning(result <- verify_qti(document, schema = "qti22",
+                                          engine = "xml2", ignore_import = FALSE,
+                                          print = FALSE))
+    expect_false(result$valid)
+    expect_gt(length(result$errors), 0)
+    if (.Platform$OS.type != "windows" && nzchar(Sys.which("xmllint"))) {
+        expect_no_warning(result <- verify_qti(as.character(document), schema = "qti22",
+                                               engine = "xmllint", ignore_import = FALSE,
+                                               print = FALSE))
+        expect_false(result$valid)
+        expect_gt(length(result$errors), 0)
+    }
 })
 
 test_that("verify_qti prints valid validation results", {

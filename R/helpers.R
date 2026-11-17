@@ -14,6 +14,7 @@
 #'   input field in the content delivery engine.
 #' @param placeholder A character string, optional; places helpful text in the
 #'   text input field in the content delivery engine.
+#' @inheritParams numericGap
 #' @return A character string mapped as YAML.
 #' @examples
 #' gap_text(c("Solution", "Solutions"), tolerance = 2)
@@ -22,7 +23,8 @@
 #' @export
 gap_text <- function(solution, tolerance = NULL, case_sensitive = FALSE,
                      points = 1, response_identifier = NULL,
-                     expected_length = size_gap(solution), placeholder = NULL) {
+                     expected_length = size_gap(solution), placeholder = NULL,
+                     incorrect = NULL) {
 
     params <- as.list(environment())
     params <- Filter(Negate(is.null), params)
@@ -52,6 +54,7 @@ gap_text <- function(solution, tolerance = NULL, case_sensitive = FALSE,
 #'   input field in the content delivery engine.
 #' @param placeholder A character string, optional; places helpful text in the
 #'   text input field in the content delivery engine.
+#' @inheritParams numericGap
 #' @return A character string mapped as YAML.
 #' @examples
 #' gap_numeric(5.0, tolerance = 10, tolerance_type = "relative")
@@ -62,7 +65,7 @@ gap_numeric <- function(solution, tolerance = 0, tolerance_type = "absolute",
                         points = 1, response_identifier = NULL,
                         include_lower_bound = TRUE, include_upper_bound = TRUE,
                         expected_length = size_gap(solution),
-                        placeholder = NULL) {
+                        placeholder = NULL, incorrect = NULL) {
 
     params <- as.list(environment())
     params <- Filter(Negate(is.null), params)
@@ -213,6 +216,14 @@ mdlist <- function(vect, solutions = NULL, gaps = NULL) {
 #' The function reads a local file, encodes it as Base64, and returns an
 #' HTML anchor tag with a data: URI. This allows the file to be embedded
 #' directly into the rendered output instead of being referenced externally.
+#'
+#' The default HTML5 `download` attribute requests a download and suggests a
+#' file name. It is accepted by `verify_qti(..., schema = "extended")`, but is
+#' outside the standard QTI 2.1 schema. Set `download = FALSE` to omit it; the
+#' browser may then display the resource instead of downloading it, and the
+#' suggested file name is lost. In either case, the target LMS and browser
+#' must support embedded data URIs. Schema validation does not establish this
+#' support.
 #'
 #' @param path Path to the local file.
 #' @param label Text shown to the user. Defaults to the file name.

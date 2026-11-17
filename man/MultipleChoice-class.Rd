@@ -21,7 +21,7 @@ with the task. By default, it takes the value of the identifier.}
 
 \item{\code{content}}{A list of character content to form the text of the question,
 which can include HTML tags. For tasks of the \link{Entry} type, it must also
-contain at least one instance of Gap objects, such as \linkS4class{TextGap},
+contain at least one instance of Gap objects, such as \link[=TextGap-class]{TextGap},
 \link{TextGapOpal}, \link{NumericGap}, or \link{InlineChoice}.}
 
 \item{\code{prompt}}{An optional character representing a simple question text,
@@ -78,6 +78,8 @@ identifiers for answers. By default, identifiers are generated
 automatically according to the template "ChoiceD", where D is a letter
 representing the alphabetical order of the answer in the list.}
 
+\item{\code{response_identifier}}{QTI response identifier. Default \code{"RESPONSE"}.}
+
 \item{\code{shuffle}}{A boolean value indicating whether to randomize the order in
 which the choices are initially presented to the candidate. Default is
 \code{TRUE}.}
@@ -88,6 +90,9 @@ vertical or horizontal mode. Possible values:
 \item "vertical" - Default.
 \item "horizontal"
 }}
+
+\item{\code{scoring_scheme}}{A method name or named list from \code{\link[=multiple_choice_scoring]{multiple_choice_scoring()}}.
+Defaults to \code{"standard"}, preserving the existing weighted mapping.}
 }}
 
 \examples{

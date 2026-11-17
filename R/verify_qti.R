@@ -33,6 +33,8 @@
 #'   local QTI 2.2 schema, or a file path to a custom XSD. The legacy
 #'   `extended_schema = TRUE` argument is still supported and is equivalent to
 #'   `schema = "extended"` when `schema` is `NULL`.
+#'   QTI 2.2 schemas are bundled in compressed form and unpacked once per R
+#'   session when selected. Validation does not require an internet connection.
 #'
 #' @return An object of class `"qti_validation_result"` with components:
 #'   \describe{
@@ -318,6 +320,9 @@ print.qti_validation_result <- function(x, ...) {
 #' @param schema Character string or `NULL`. Schema selector or custom XSD path.
 #'   Supported selectors are `"qti21"`, `"extended"`, and `"qti22"`. Defaults
 #'   to `NULL`, which uses the legacy `extended_schema` flag.
+#' @details Assessment-test validation checks the generated QTI test and item
+#'   documents. The content-package manifest and OpenOlat's separate
+#'   `QTI21PackageConfig.xml` are not QTI assessment documents and are excluded.
 #'
 #' @return A `qti_validation_result` or `qti_validation_results_list` object.
 #' @export
@@ -412,7 +417,8 @@ setMethod("verify_qti", signature(doc = "AssessmentTest"),
 
               createQtiTest(doc, tmp_dir)
               xml_files <- list.files(tmp_dir, pattern = "\\.xml$", full.names = TRUE, recursive = TRUE)
-              xml_files <- xml_files[!grepl("manifest\\.xml$", xml_files, ignore.case = TRUE)]
+              auxiliary <- c("imsmanifest.xml", "manifest.xml", "qti21packageconfig.xml")
+              xml_files <- xml_files[!tolower(basename(xml_files)) %in% auxiliary]
 
               results <- lapply(xml_files, function(f) {
                   verify_qti(f, extended_schema, ctx, color, engine, ignore_import, print = FALSE, schema = schema)
@@ -601,6 +607,7 @@ resolve_qti_schema <- function(schema = NULL, extended_schema = FALSE) {
         qti2p1extended = system_schema_file("qti_v2p1p2_extension.xsd"),
         qti22 = qti22_schema_file(),
         qti2p2 = qti22_schema_file(),
+        imsqtiv2p2xsd = qti22_schema_file(),
         NULL
     )
 
@@ -652,9 +659,36 @@ system_schema_file <- function(schema_name) {
     schema_file
 }
 
-qti22_schema_file <- function() {
-    schema_file <- system_schema_file(file.path("xsd", "imsqti_v2p2.xsd"))
+qti22_schema_cache <- new.env(parent = emptyenv())
 
+qti22_schema_file <- function() {
+    archive <- system.file("schemas", "qti22.zip", package = "rqti")
+    if (!nzchar(archive)) {
+        stop("Could not find the bundled QTI 2.2 schema archive.", call. = FALSE)
+    }
+    hash <- unname(tools::md5sum(archive))
+    cached_directory <- if (is.null(qti22_schema_cache$directory)) "" else qti22_schema_cache$directory
+    cached_file <- file.path(cached_directory,
+                             "xsd", "imsqti_v2p2.xsd")
+    if (identical(qti22_schema_cache$hash, hash) && file.exists(cached_file)) {
+        return(cached_file)
+    }
+
+    directory <- tempfile("rqti-qti22-schemas-")
+    dir.create(directory)
+    ready <- FALSE
+    on.exit(if (!ready) unlink(directory, recursive = TRUE), add = TRUE)
+    zip::unzip(archive, exdir = directory)
+    schema_file <- file.path(directory, "xsd", "imsqti_v2p2.xsd")
+    if (!file.exists(schema_file)) {
+        stop("The bundled QTI 2.2 schema archive is incomplete.", call. = FALSE)
+    }
+    if (!is.null(qti22_schema_cache$directory)) {
+        unlink(qti22_schema_cache$directory, recursive = TRUE)
+    }
+    qti22_schema_cache$directory <- directory
+    qti22_schema_cache$hash <- hash
+    ready <- TRUE
     schema_file
 }
 

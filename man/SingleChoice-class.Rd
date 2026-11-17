@@ -21,7 +21,7 @@ with the task. By default, it takes the value of the identifier.}
 
 \item{\code{content}}{A list of character content to form the text of the question,
 which can include HTML tags. For tasks of the \link{Entry} type, it must also
-contain at least one instance of Gap objects, such as \linkS4class{TextGap},
+contain at least one instance of Gap objects, such as \link[=TextGap-class]{TextGap},
 \link{TextGapOpal}, \link{NumericGap}, or \link{InlineChoice}.}
 
 \item{\code{prompt}}{An optional character representing a simple question text,
@@ -78,6 +78,8 @@ identifiers for answers. By default, identifiers are generated
 automatically according to the template "ChoiceD", where D is a letter
 representing the alphabetical order of the answer in the list.}
 
+\item{\code{response_identifier}}{QTI response identifier. Default \code{"RESPONSE"}.}
+
 \item{\code{shuffle}}{A boolean value indicating whether to randomize the order in
 which the choices are initially presented to the candidate. Default is
 \code{TRUE}.}
@@ -93,15 +95,8 @@ vertical or horizontal mode. Possible values:
 answer in the \code{choices} slot. By default, the first item in the \code{choices}
 slot is considered the correct answer. Default is \code{1}.}
 
-\item{\code{scoring_scheme}}{A character value, optional, defining how response
-options are scored. Possible values:
-\itemize{
-\item "standard" - the correct answer receives full points and incorrect
-answers receive 0. This is used by default.
-\item "penalty" - the correct answer receives full points and incorrect
-answers receive a negative score of -1/(k-1), where k is the number of
-response options.
-}}
+\item{\code{scoring_scheme}}{A method name or named list from \code{\link[=single_choice_scoring]{single_choice_scoring()}}.
+Defaults to \code{"standard"}; \code{"penalty"} retains correction for guessing.}
 }}
 
 \examples{

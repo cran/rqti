@@ -137,12 +137,14 @@ detect_label <- function(label) {
     sys_path <- system.file(package="rqti")
     if (length(label) == 1) return(label)
     locale <- Sys.getlocale("LC_COLLATE")
-    lang_pos <- regexpr("^([^_]+)", locale)
-    lang <- regmatches(locale, lang_pos)[[1]]
+    lang <- sub("[_.@].*$", "", locale)
     df <- read.csv(file.path(sys_path,"language-codes_csv.csv"))
-    if (nchar(lang) > 2) lang <- df$alpha2[df$English==lang]
+    if (nchar(lang) > 2) {
+        match <- df$alpha2[df$English == lang]
+        if (length(match)) lang <- match[[1L]]
+    }
     result <- label[lang]
-    if (is.na(result)) result <- label[1]
+    if (length(result) != 1L || is.na(result)) result <- label[1]
     return(unname(result))
 }
 # creates tag assessmentSection in test file
@@ -173,10 +175,10 @@ create_section_test <- function(object, folder, verify) {
                                   fixed = "false",
                                   title = object@title,
                                   visible = tolower(object@visible),
-                                  tagList(time_limit,
-                                          shuffle,
+                                  tagList(session_control,
+                                          time_limit,
                                           selection,
-                                          session_control,
+                                          shuffle,
                                           assessment_items)))
 }
 

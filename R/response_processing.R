@@ -42,9 +42,9 @@ thead <- create_tag("thead")
 tbody <- create_tag("tbody")
 
 # process modalfeedback for all match types and mc
-create_default_resp_processing <- function(object) {
-    not_tag <- not(isNull(variable("RESPONSE")))
-    sum_tag <- sum_tag(list(variable("SCORE"), mapResponse("RESPONSE")))
+create_default_resp_processing <- function(object, response_identifier = "RESPONSE") {
+    not_tag <- not(isNull(variable(response_identifier)))
+    sum_tag <- sum_tag(list(variable("SCORE"), mapResponse(response_identifier)))
     set_ov_tag <- setOutcomeValue(list(identifier = "SCORE", sum_tag))
     responseIf_tag <- responseIf(list(not_tag, set_ov_tag))
     resp_cond1 <- responseCondition(responseIf_tag)
@@ -52,7 +52,9 @@ create_default_resp_processing <- function(object) {
     resp_cond23 <- make_default_resp_cond()
 
     resp_cond4 <- NULL
-    if (length(object@feedback) > 0) resp_cond4 <- make_default_feedback_cond()
+    if (length(object@feedback) > 0) {
+        resp_cond4 <- make_default_feedback_cond(response_identifier = response_identifier)
+    }
 
     conditions <- Map(createResponseCondition, object@feedback)
 
@@ -63,10 +65,16 @@ create_default_resp_processing <- function(object) {
 
 #process modalfeedback for sc
 create_default_resp_processing_sc <- function(object) {
-    resp_cond1 <- make_first_cond_sc_order()
+    if (!is.character(object@scoring_scheme) ||
+        !object@scoring_scheme %in% c("standard", "penalty")) {
+        return(create_choice_scoring_processing(object))
+    }
+    resp_cond1 <- make_first_cond_sc_order(object@response_identifier)
     resp_cond23 <- make_default_resp_cond()
     resp_cond4 <- NULL
-    if (length(object@feedback) > 0) resp_cond4 <- make_default_feedback_cond()
+    if (length(object@feedback) > 0) {
+        resp_cond4 <- make_default_feedback_cond(response_identifier = object@response_identifier)
+    }
 
     conditions <- Map(createResponseCondition, object@feedback)
 
@@ -75,9 +83,9 @@ create_default_resp_processing_sc <- function(object) {
     return(resp_proc)
 }
 
-make_first_cond_sc_order <- function() {
-    response_if <- responseIf(isNull(variable("RESPONSE")))
-    match_tag <- match(list(variable("RESPONSE"), correct("RESPONSE")))
+make_first_cond_sc_order <- function(response_identifier = "RESPONSE") {
+    response_if <- responseIf(isNull(variable(response_identifier)))
+    match_tag <- match(list(variable(response_identifier), correct(response_identifier)))
     set_ov_tag <- setOutcomeValue(list(identifier = "SCORE", variable("MAXSCORE")))
     response_elseif <- responseElseIf(list(match_tag, set_ov_tag))
     response_else <- responseElse(list(setOutcomeValue(list(identifier = "SCORE", variable("MINSCORE")))))
@@ -146,8 +154,10 @@ make_default_resp_cond <- function() {
     return(tagList(resp_cond1, resp_cond2))
 }
 
-make_default_feedback_cond <- function(answers = list(NULL)) {
-    tag_isnull <- Map(make_response_condition, answers)
+make_default_feedback_cond <- function(answers = list(NULL), response_identifier = NULL) {
+    tag_isnull <- if (is.null(response_identifier)) Map(make_response_condition, answers) else {
+        list(isNull(variable(response_identifier)))
+    }
     if (length(tag_isnull) > 1) {
         tag_isnull <- and(tag_isnull)
     }
@@ -155,6 +165,12 @@ make_default_feedback_cond <- function(answers = list(NULL)) {
     set_ov <- setOutcomeValue(list(identifier = "FEEDBACKBASIC", tag_bv))
     response_if <- responseIf(list(tag_isnull, set_ov))
     tag_lt <- lt(list(variable("SCORE"), variable("MAXSCORE")))
+    # Serialized fractional weights can sum just below MAXSCORE. Relative QTI
+    # tolerance is a percentage: 1e-10 percent allows 1e-12 relative roundoff.
+    full_score <- equal(list(toleranceMode = "relative",
+        tolerance = "0.0000000001 0.0000000001",
+        variable("SCORE"), variable("MAXSCORE")))
+    tag_lt <- and(list(tag_lt, not(full_score)))
 
     tag_bv <- baseValue(list(baseType = "identifier", "incorrect"))
     set_ov <- setOutcomeValue(list(identifier = "FEEDBACKBASIC", tag_bv))
@@ -167,6 +183,22 @@ make_default_feedback_cond <- function(answers = list(NULL)) {
     resp_cond <- responseCondition(list(response_if, response_elseif,
                                         response_else))
     return(resp_cond)
+}
+
+gap_penalty_processing <- function(object, processing) {
+    if (object@incorrect == 0) return(processing)
+    id <- object@response_identifier
+    score <- paste0("SCORE_", id)
+    answered <- not(isNull(variable(id)))
+    if (is(object, "TextGap")) {
+        # At least one non-whitespace character, using XML Schema regex syntax.
+        answered <- and(list(answered, tag("patternMatch",
+            list(pattern = "[\\s\\S]*\\S[\\s\\S]*", variable(id)))))
+    }
+    tagList(setOutcomeValue(list(identifier = score, baseValue(list(baseType = "float", 0)))),
+        responseCondition(responseIf(list(answered,
+            setOutcomeValue(list(identifier = score,
+                baseValue(list(baseType = "float", object@incorrect)))), processing))))
 }
 
 create_response_processing_gap_basic <- function(object) {

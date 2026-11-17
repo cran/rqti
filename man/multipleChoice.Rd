@@ -16,7 +16,9 @@ multipleChoice(
   orientation = "vertical",
   shuffle = TRUE,
   calculator = NA_character_,
-  files = NA_character_
+  files = NA_character_,
+  scoring_scheme = "standard",
+  response_identifier = "RESPONSE"
 )
 }
 \arguments{
@@ -72,6 +74,13 @@ calculator to the candidate. Possible values:
 
 \item{files}{A character vector, optional, containing paths to files that
 will be accessible to the candidate during the test/exam.}
+
+\item{scoring_scheme}{A method name or specification from \code{\link[=multiple_choice_scoring]{multiple_choice_scoring()}}.
+The default \code{"standard"} retains the existing balanced mapping and zero floor.}
+
+\item{response_identifier}{QTI response identifier. Default \code{"RESPONSE"}.
+Must be a valid identifier distinct from the item's score and feedback
+outcome identifiers.}
 }
 \value{
 An object of class \link{MultipleChoice}
